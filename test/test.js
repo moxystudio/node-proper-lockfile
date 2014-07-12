@@ -76,6 +76,8 @@ describe('.lock()', function () {
         }, next);
     });
 
+    it('should pass over stale locks');
+
     it('should update the lock mtime automatically', function (next) {
         this.timeout(10000);
 
@@ -331,6 +333,8 @@ describe('misc', function () {
     it('should not contain suspicious nodejs native fs calls', function () {
         expect(/\s+fs\.[a-z]+/i.test(lockfileContents)).to.be(false);
     });
+
+    it('should remove open locks if the process crashes');
 
     it('should work on stress conditions');
 });
