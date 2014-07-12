@@ -5,16 +5,16 @@ A lockfile utility based on fs that works cross process and machine (network fil
 
 ## Installation
 
-`$npm install proper-lockfile --save`
+`$ npm install proper-lockfile --save`
 
 
 ## Design
 
-There are various ways to achieve file locking.
+There are various ways to achieve [file locking](http://en.wikipedia.org/wiki/File_locking).
 
 This library utilizes the `rename` strategy which works atomically on any kind of file system, even network based ones.
 
-Whenever a lock is requested, a temporary file is created and then renamed to the final lockfile name. The lockfile path is based on the file path you are trying to lock by suffixing it with `.lock`.
+Whenever a lock is requested, a temporary file is created and then renamed to the lockfile name. The lockfile path is based on the file path you are trying to lock by suffixing it with `.lock`.
 
 When a lock is successfully acquired, the lockfile's `mtime` (modified time) is periodically updated to prevent staleness. This allows to effectively check if a lock is stale by checking its `mtime` against a stale threshold. If the update of the mtime fails several times, the lock might be compromised.
 
@@ -63,14 +63,13 @@ lockfile.lock('some/file', function (err, unlock, lockfile) {
     // Do something while the file is locked
     // You can even write data to the lockfile
 
-    // When you are done, then call the provided unlock function
-    unlock();
-    // or if you want to handle unlock errors..
-    unlock(function (err) {
+    // Call the provided unlock function when you're done
+    // Note that you can optionally handle any unlock errors
+    unlock(/* function (err) {
         if (err) {
             throw err;  // Unlock failed
         }
-    })
+    }*/)
 }, function (err) {
     // If we get here, the lock has been compromised
     // e.g.: the lock has been manually deleted
@@ -82,10 +81,9 @@ lockfile.lock('some/file', function (err, unlock, lockfile) {
 
 Removes a lock.
 
-You should NOT call this function to unlock a previously acquired lock.   
-Use the provided `unlock` function as seen above.   
+You should NOT call this function to unlock a previously acquired lock. Use the provided `unlock` function as seen above.
 
-This function is provided to simply remove the lock, but its unsafe. If someone is owning the lock on `file`, it will get compromised.
+This function is provided to simply remove the lock, but its unsafe. If something is owning the lock on `file`, it will get compromised.
 
 
 Available options:
