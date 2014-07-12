@@ -48,7 +48,7 @@ function checkLock(file, options, callback) {
         }
 
         // If it's stale, remove it and try again!
-        options.fs.rmdir(lockfile, function (err) {
+        options.fs.unlink(lockfile, function (err) {
             // Ignore ENOENT errors because other processes might end
             // up removing it at the same time
             if (err && err.code !== 'ENOENT') {
@@ -261,7 +261,7 @@ function remove(file, options, callback) {
 // Remove acquired locks on exit
 process.on('exit', function () {
     Object.keys(locks).forEach(function (file) {
-        try { locks[file].options.fs.rmdirSync(file + '.lock'); } catch (e) {}
+        try { locks[file].options.fs.unlinkSync(file + '.lock'); } catch (e) {}
     });
 });
 
