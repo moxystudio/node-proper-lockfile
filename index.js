@@ -11,7 +11,7 @@ var locks = {};
 function acquireLock(file, options, callback, compromised) {
     var lockfile = file + '.lock';
 
-    // Rename tmp file it to lock file (atomic operation)
+    // Rename tmp file it to lockfile (atomic operation)
     options.fs.mkdir(lockfile, function (err) {
         if (err) {
             // Don't check staleness if it's disabled
@@ -60,14 +60,14 @@ function updateLock(file, options) {
 
         meta.updateTimeout = null;
 
-        // Update the modified time of the lock file
+        // Update the modified time of the lockfile
         options.fs.utimes(file + '.lock', mtime, mtime, function (err) {
             // Ignore if the lock was removed meanwhile
             if (meta !== locks[file]) {
                 return;
             }
 
-            // If it failed to update the lock file, check if it is compromised
+            // If it failed to update the lockfile, check if it is compromised
             // by analyzing the error code and the last refresh
             if (err) {
                 if (err.code === 'ENOENT' || meta.lastUpdate < Date.now() - options.stale - 2000) {
@@ -109,10 +109,14 @@ function lock(file, options, callback, compromised) {
         update: 5000,   // 5 secs
         resolve: true,
         retries: 0,
-        retryWait: 30000,
         fs: fs
     }, options);
 
+    options.retries = options.retries || 0;
+
+    if (typeof options.retries === 'number') {
+        options.retries = { retries: options.retries };
+    }
     if (options.stale > 0) {
         options.stale = Math.max(options.stale, 1000);
     }
@@ -128,22 +132,10 @@ function lock(file, options, callback, compromised) {
             return callback(err);
         }
 
-        operation = retry.operation({
-            retries: options.retries,
-            maxTimeout: options.retryWait
-        });
+        // Attempt to acquire the lock
+        operation = retry.operation(options.retries);
 
         operation.attempt(function () {
-            // Check if the lock is acquired in this process which is faster
-            if (locks[file]) {
-                if (operation.retry(errcode('Lock file is already being hold', 'ELOCK', { file: file }))) {
-                    return;
-                }
-
-                return callback(operation.mainError());
-            }
-
-            // Acquire the lock
             acquireLock(file, options, function (err) {
                 if (operation.retry(err)) {
                     return;
@@ -156,7 +148,8 @@ function lock(file, options, callback, compromised) {
                 // We now own the lock
                 locks[file] = {
                     options: options,
-                    compromisedFn: compromised
+                    compromisedFn: compromised,
+                    lastUpdate: Date.now()
                 };
 
                 // We must keep the lock fresh to avoid staleness
@@ -209,6 +202,7 @@ function remove(file, options, callback) {
 }
 
 // Remove acquired locks on exit
+/* istanbul ignore next */
 process.on('exit', function () {
     Object.keys(locks).forEach(function (file) {
         try { locks[file].options.fs.rmdir(file + '.lock'); } catch (e) {}

@@ -2,3 +2,4 @@
 /npm-debug.*
 /test/tmp*
 /test/*.log
+/coverage

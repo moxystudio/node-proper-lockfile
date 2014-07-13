@@ -4,7 +4,9 @@
   "description": "A lockfile utility based on fs that works cross process and machine (network file systems)",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test/test.js"
+    "test": "mocha test/test.js",
+    "coverage": "istanbul cover node_modules/.bin/_mocha",
+    "open-coverage": "open coverage/lcov-report/index.html"
   },
   "bugs": {
     "url": "https://github.com/IndigoUnited/node-proper-lockfile/issues/"

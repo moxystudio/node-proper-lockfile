@@ -22,7 +22,7 @@ When a lock is successfully acquired, the lockfile's `mtime` (modified time) is 
 
 This library is similar to [lockfile](https://github.com/isaacs/lockfile) but the later has some drawbacks:
 
-- It relies on `open` with `O_EXCL` flag which is known by having problems in network file systems. `proper-lockfile` uses `mkdir` which doesn't have this issue.
+- It relies on `open` with `O_EXCL` flag which has problems in network file systems. `proper-lockfile` uses `mkdir` which doesn't have this issue.
 
 > O_EXCL is broken on NFS file systems; programs which rely on it for performing locking tasks will contain a race condition.
 
@@ -45,10 +45,9 @@ Available options:
 
 - `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (`false` to disable)
 - `update`: The interval in which the lockfile's mtime will be updated, defaults to `5000`
-- `retries`: The maximum number of retries, defaults to `0`
-- `retryWait`: The maximum number of milliseconds to wait between each retry, defaults to `30000`.
+- `retries`: The number of retries or a [retry](https://www.npmjs.org/package/retry) object, defaults to `0`
 - `resolve`: Resolve to a canonical path to handle relative paths & symlinks properly, defaults to `true`
-- `fs`: A custom fs to use, defaults to node's fs
+- `fs`: A custom fs to use, defaults to `graceful-fs`
 
 
 ```js
@@ -62,11 +61,13 @@ lockfile.lock('some/file', function (err, unlock) {
     // Do something while the file is locked
 
     // Call the provided unlock function when you're done
-    // Note that you can optionally handle any unlock errors
+    // Note that you can optionally handle unlock errors
     unlock(/* function (err) {
         if (err) {
             throw err;  // Unlock failed
         }
+
+        // Lock is released
     }*/)
 }, function (err) {
     // If we get here, the lock has been compromised
@@ -86,8 +87,8 @@ This function is provided to simply remove the lock, but its unsafe. If somethin
 
 Available options:
 
-- `resolve`: Resolve the file path to a canonical path to handle heterogeneous paths and symlinks, defaults to `true`
-- `fs`: A custom fs to use, defaults to node's fs
+- `resolve`: Resolve to a canonical path to handle relative paths & symlinks properly, defaults to `true`
+- `fs`: A custom fs to use, defaults to `graceful-fs`
 
 
 ```js
@@ -95,7 +96,7 @@ var lockfile = require('proper-lockfile');
 
 lockfile.remove('some/file', function (err, unlock) {
     if (err) {
-        throw err;      // Removal failed
+        throw err;  // Removal failed
     }
 });
 ```
