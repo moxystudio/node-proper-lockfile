@@ -157,7 +157,9 @@ function lock(file, options, callback, compromised) {
                     updateLock(file, options);
                 }
 
-                callback(null, remove.bind(null, file, options));
+                callback(null, function (unlockCallback) {
+                    remove(file, options, unlockCallback || function () {});
+                });
             }, compromised);
         });
     });
@@ -179,7 +181,7 @@ function remove(file, options, callback) {
         var meta;
 
         if (err) {
-            return callback && callback(err);
+            return callback(err);
         }
 
         meta = locks[file];
@@ -193,10 +195,10 @@ function remove(file, options, callback) {
         options.fs.rmdir(file + '.lock', function (err) {
             // Ignore ENOENT errors when removing the directory
             if (err && err.code !== 'ENOENT') {
-                return callback && callback(err);
+                return callback(err);
             }
 
-            callback && callback();
+            callback();
         });
     });
 }

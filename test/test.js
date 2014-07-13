@@ -325,6 +325,29 @@ describe('.lock()', function () {
             }, next);
         }, next);
     });
+
+    it('should release the lock after calling the provided unlock function (without callback)', function (next) {
+        this.timeout(5000);
+
+        lockfile.lock(tmpFile, function (err, unlock) {
+            expect(err).to.not.be.ok();
+
+            lockfile.lock(tmpFile, function (err) {
+                expect(err).to.be.an(Error);
+                expect(err.code).to.be('ELOCK');
+
+                unlock();
+
+                setTimeout(function () {
+                    lockfile.lock(tmpFile, function (err) {
+                        expect(err).to.not.be.ok();
+
+                        next();
+                    }, next);
+                }, 2000);
+            }, next);
+        }, next);
+    });
 });
 
 describe('.remove()/unlock()', function () {
