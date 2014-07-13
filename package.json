@@ -1,6 +1,6 @@
 {
   "name": "proper-lockfile",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A lockfile utility based on fs that works cross process and machine (network file systems)",
   "main": "index.js",
   "scripts": {
