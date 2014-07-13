@@ -516,7 +516,12 @@ describe('misc', function () {
 
         spawn('node', [__dirname + '/fixtures/stress.js'], function (err, stdout) {
             if (err) {
-                fs.writeFileSync(__dirname + '/stress.log', stdout);
+                if (process.env.TRAVIS) {
+                    process.stdout.write(stdout);
+                } else {
+                    fs.writeFileSync(__dirname + '/stress.log', stdout);
+                }
+
                 return next(new Error('Stress test failed'));
             }
 
