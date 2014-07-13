@@ -18,12 +18,12 @@ function acquireLock(file, options, callback, compromised) {
             return callback();
         }
 
+        // Check if lock is stale
         // Don't check staleness if it's disabled
         if (options.stale <= 0) {
             return callback(errcode('Lock file is already being hold', 'ELOCK', { file: file }));
         }
 
-        // Check if lock is stale
         return options.fs.stat(lockfile, function (err, stat) {
             if (err) {
                 // Retry if the lockfile has been removed (meanwhile)
