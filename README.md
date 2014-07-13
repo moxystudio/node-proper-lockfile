@@ -45,7 +45,7 @@ Available options:
 
 - `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (`false` to disable)
 - `update`: The interval in which the lockfile's mtime will be updated, defaults to `5000`
-- `retries`: The number of retries or a [retry](https://www.npmjs.org/package/retry) object, defaults to `0`
+- `retries`: The number of retries or a [retry](https://www.npmjs.org/package/retry) options object, defaults to `0`
 - `resolve`: Resolve to a canonical path to handle relative paths & symlinks properly, defaults to `true`
 - `fs`: A custom fs to use, defaults to `graceful-fs`
 
