@@ -28,7 +28,8 @@ function acquireLock(file, options, callback, compromised) {
             if (err) {
                 // Retry if the lockfile has been removed (meanwhile)
                 if (err.code === 'ENOENT') {
-                    return acquireLock(file, extend(options, { stale: 0 }), callback, compromised);
+                    options = extend({}, options, { stale: 0 });  // Skip stale check to avoid recursiveness
+                    return acquireLock(file, options, callback, compromised);
                 }
 
                 return callback(err);
@@ -46,7 +47,8 @@ function acquireLock(file, options, callback, compromised) {
                     return callback(err);
                 }
 
-                acquireLock(file, extend(options, { stale: 0 }), callback, compromised);
+                options = extend({}, options, { stale: 0 });  // Skip stale check to avoid recursiveness
+                acquireLock(file, options, callback, compromised);
             });
         });
     });
@@ -158,7 +160,9 @@ function lock(file, options, callback, compromised) {
                 }
 
                 callback(null, function (unlockCallback) {
-                    remove(file, options, unlockCallback || function () {});
+                    unlockCallback = unlockCallback || function () {};  // Unlock callback is optional
+                    options = extend({}, options, { resolve: false });  // Not necessary to resolve twice
+                    remove(file, options, unlockCallback);
                 });
             }, compromised);
         });
