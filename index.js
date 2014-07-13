@@ -13,41 +13,42 @@ function acquireLock(file, options, callback, compromised) {
 
     // Use mkdir to create the lockfile (atomic operation)
     options.fs.mkdir(lockfile, function (err) {
-        if (err) {
-            // Don't check staleness if it's disabled
-            if (options.stale <= 0) {
+        // If it succeeded, we are done
+        if (!err) {
+            return callback();
+        }
+
+        // Don't check staleness if it's disabled
+        if (options.stale <= 0) {
+            return callback(errcode('Lock file is already being hold', 'ELOCK', { file: file }));
+        }
+
+        // Check if lock is stale
+        return options.fs.stat(lockfile, function (err, stat) {
+            if (err) {
+                // Retry if the lockfile has been removed (meanwhile)
+                if (err.code === 'ENOENT') {
+                    return acquireLock(file, extend(options, { stale: 0 }), callback, compromised);
+                }
+
+                return callback(err);
+            }
+
+            if (stat.mtime.getTime() > Date.now() - options.stale) {
                 return callback(errcode('Lock file is already being hold', 'ELOCK', { file: file }));
             }
 
-            // Check if lock is stale
-            return options.fs.stat(lockfile, function (err, stat) {
-                if (err) {
-                    // Retry if the lockfile has been removed (meanwhile)
-                    if (err.code === 'ENOENT') {
-                        return acquireLock(file, extend(options, { stale: 0 }), callback, compromised);
-                    }
-
+            // If it's stale, remove it and try again!
+            options.fs.rmdir(lockfile, function (err) {
+                // Ignore ENOENT errors because other processes might end
+                // up removing it at the same time
+                if (err && err.code !== 'ENOENT') {
                     return callback(err);
                 }
 
-                if (stat.mtime.getTime() > Date.now() - options.stale) {
-                    return callback(errcode('Lock file is already being hold', 'ELOCK', { file: file }));
-                }
-
-                // If it's stale, remove it and try again!
-                options.fs.rmdir(lockfile, function (err) {
-                    // Ignore ENOENT errors because other processes might end
-                    // up removing it at the same time
-                    if (err && err.code !== 'ENOENT') {
-                        return callback(err);
-                    }
-
-                    acquireLock(file, extend(options, { stale: 0 }), callback, compromised);
-                });
+                acquireLock(file, extend(options, { stale: 0 }), callback, compromised);
             });
-        }
-
-        callback();
+        });
     });
 }
 
@@ -67,9 +68,14 @@ function updateLock(file, options) {
                 return;
             }
 
+            // If the update succeded, keep updating the lock
+            if (!err) {
+                meta.lastUpdate = Date.now();
+                meta.updateDelay = null;
+                updateLock(file, options);
             // If it failed to update the lockfile, check if it is compromised
             // by analyzing the error code and the last refresh
-            if (err) {
+            } else {
                 if (err.code === 'ENOENT' || meta.lastUpdate < Date.now() - options.stale - 2000) {
                     remove(file, options, function () {
                         meta.compromisedFn && meta.compromisedFn(err);
@@ -78,11 +84,6 @@ function updateLock(file, options) {
                     meta.updateDelay = 1000;
                     updateLock(file, options);
                 }
-            // Otherwise, everything is ok
-            } else {
-                meta.lastUpdate = Date.now();
-                meta.updateDelay = null;
-                updateLock(file, options);
             }
         });
     }, meta.updateDelay);
@@ -134,7 +135,6 @@ function lock(file, options, callback, compromised) {
 
         // Attempt to acquire the lock
         operation = retry.operation(options.retries);
-
         operation.attempt(function () {
             acquireLock(file, options, function (err) {
                 if (operation.retry(err)) {
