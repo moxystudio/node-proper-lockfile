@@ -108,12 +108,13 @@ function slave() {
                 process.send(Date.now() + ' LOCK_ACQUIRED\n');
 
                 setTimeout(function () {
+                    process.send(Date.now() + ' LOCK_RELEASED\n');
+
                     unlock(function (err) {
                         if (err) {
                             throw err;
                         }
 
-                        process.send(Date.now() + ' LOCK_RELEASED\n');
                         tryLock();
                     });
                 }, Math.random() * 200);
