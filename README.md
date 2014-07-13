@@ -106,6 +106,8 @@ lockfile.remove('some/file', function (err, unlock) {
 
 Simply run the test suite with `$ npm test`
 
+The test suite is very extensive. We even have a stress test suite to guarantee exclusiveness of locks.
+
 
 ## License
 
