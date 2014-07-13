@@ -11,6 +11,7 @@ var lockfile = require('../');
 
 var lockfileContents = fs.readFileSync(__dirname + '/../index.js').toString();
 var tmpFile = path.join(__dirname, 'tmp');
+var tmpFileLock = tmpFile + '.lock';
 
 describe('.lock()', function () {
     beforeEach(function () {
@@ -21,7 +22,7 @@ describe('.lock()', function () {
     afterEach(function (next) {
         rimraf.sync(tmpFile + '_symlink');
 
-        if (!fs.existsSync(tmpFile + '.lock')) {
+        if (!fs.existsSync(tmpFileLock)) {
             return next();
         }
 
@@ -38,11 +39,10 @@ describe('.lock()', function () {
     });
 
     it('should create the lock file', function (next) {
-        lockfile.lock(tmpFile, function (err, unlock, lockpath) {
+        lockfile.lock(tmpFile, function (err, unlock) {
             expect(err).to.not.be.ok();
             expect(unlock).to.be.a('function');
-            expect(lockpath).to.equal(tmpFile + '.lock');
-            expect(fs.existsSync(tmpFile + '.lock')).to.be(true);
+            expect(fs.existsSync(tmpFileLock)).to.be(true);
 
             next();
         }, next);
@@ -97,12 +97,12 @@ describe('.lock()', function () {
     it('should pass over stale locks', function (next) {
         var mtime = (Date.now() - 60000) / 1000;
 
-        fs.mkdirSync(tmpFile + '.lock');
-        fs.utimesSync(tmpFile + '.lock', mtime, mtime);
+        fs.mkdirSync(tmpFileLock);
+        fs.utimesSync(tmpFileLock, mtime, mtime);
 
-        lockfile.lock(tmpFile, function (err, unlock, lockpath) {
+        lockfile.lock(tmpFile, function (err) {
             expect(err).to.not.be.ok();
-            expect(fs.statSync(lockpath).mtime.getTime()).to.be.greaterThan(Date.now() - 3000);
+            expect(fs.statSync(tmpFileLock).mtime.getTime()).to.be.greaterThan(Date.now() - 3000);
 
             next();
         }, next);
@@ -111,25 +111,25 @@ describe('.lock()', function () {
     it('should update the lock mtime automatically', function (next) {
         this.timeout(10000);
 
-        lockfile.lock(tmpFile, { update: 1000 }, function (err, unlock, lockpath) {
+        lockfile.lock(tmpFile, { update: 1000 }, function (err) {
             var mtime;
 
             expect(err).to.not.be.ok();
 
             setTimeout(function () {
-                mtime = fs.statSync(lockpath).mtime;
+                mtime = fs.statSync(tmpFileLock).mtime;
             }, 100);
 
             // First update occurs at 1000ms
             setTimeout(function () {
-                var stat = fs.statSync(lockpath);
+                var stat = fs.statSync(tmpFileLock);
                 expect(stat.mtime.getTime()).to.be.greaterThan(mtime.getTime());
                 mtime = stat.mtime;
             }, 1500);
 
             // Second update occurs at 2000ms
             setTimeout(function () {
-                var stat = fs.statSync(lockpath);
+                var stat = fs.statSync(tmpFileLock);
                 expect(stat.mtime.getTime()).to.be.greaterThan(mtime.getTime());
                 mtime = stat.mtime;
 
@@ -141,10 +141,10 @@ describe('.lock()', function () {
     it('should call the compromised function if unable to update the lock mtime', function (next) {
         this.timeout(10000);
 
-        lockfile.lock(tmpFile, { update: 1000 }, function (err, unlock, lockpath) {
+        lockfile.lock(tmpFile, { update: 1000 }, function (err) {
             expect(err).to.not.be.ok();
 
-            fs.rmdirSync(lockpath);
+            fs.rmdirSync(tmpFileLock);
         }, function (err) {
             expect(err).to.be.an(Error);
             expect(err.code).to.be('ENOENT');
@@ -205,7 +205,7 @@ describe('.remove()/unlock()', function () {
     afterEach(function (next) {
         rimraf.sync(tmpFile + '_symlink');
 
-        if (!fs.existsSync(tmpFile + '.lock')) {
+        if (!fs.existsSync(tmpFileLock)) {
             return next();
         }
 
@@ -221,11 +221,11 @@ describe('.remove()/unlock()', function () {
     });
 
     it('should remove the lock file', function (next) {
-        fs.mkdirSync(tmpFile + '.lock');
+        fs.mkdirSync(tmpFileLock);
 
         lockfile.remove(tmpFile, function (err) {
             expect(err).to.not.be.ok();
-            expect(fs.existsSync(tmpFile + '.lock')).to.be(false);
+            expect(fs.existsSync(tmpFileLock)).to.be(false);
 
             next();
         }, next);
@@ -298,11 +298,11 @@ describe('.remove()/unlock()', function () {
         // Create a symlink to the tmp file
         fs.symlinkSync(tmpFile, tmpFile + '_symlink');
 
-        fs.mkdirSync(tmpFile + '.lock');
+        fs.mkdirSync(tmpFileLock);
 
         lockfile.remove(tmpFile, function (err) {
             expect(err).to.not.be.ok();
-            expect(fs.existsSync(tmpFile + '.lock')).to.be(false);
+            expect(fs.existsSync(tmpFileLock)).to.be(false);
 
             next();
         }, next);
@@ -340,13 +340,13 @@ describe('misc', function () {
                return next(new Error('Lock failed'));
             }
 
-            expect(fs.existsSync(tmpFile + '.lock')).to.be(false);
+            expect(fs.existsSync(tmpFileLock)).to.be(false);
 
             next();
         });
     });
 
-    it.skip('should work on stress conditions', function (next) {
+    it('should work on stress conditions', function (next) {
         this.timeout(80000);
 
         spawn('node', [__dirname + '/fixtures/stress.js'], function (err, stdout) {

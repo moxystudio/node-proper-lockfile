@@ -47,14 +47,14 @@ Available options:
 - `update`: The interval in which the lockfile's mtime will be updated, defaults to `5000`
 - `retries`: The maximum number of retries, defaults to `0`
 - `retryWait`: The maximum number of milliseconds to wait between each retry, defaults to `30000`.
-- `resolve`: Resolve the file path to a canonical path to handle heterogeneous paths and symlinks, defaults to `true`
+- `resolve`: Resolve to a canonical path to handle relative paths & symlinks properly, defaults to `true`
 - `fs`: A custom fs to use, defaults to node's fs
 
 
 ```js
 var lockfile = require('proper-lockfile');
 
-lockfile.lock('some/file', function (err, unlock, lockpath) {
+lockfile.lock('some/file', function (err, unlock) {
     if (err) {
         throw err;      // Lock failed
     }

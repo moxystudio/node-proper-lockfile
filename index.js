@@ -164,7 +164,7 @@ function lock(file, options, callback, compromised) {
                     updateLock(file, options);
                 }
 
-                callback(null, remove.bind(null, file, options), file + '.lock');
+                callback(null, remove.bind(null, file, options));
             }, compromised);
         });
     });
