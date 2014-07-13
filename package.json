@@ -4,7 +4,7 @@
   "description": "A lockfile utility based on fs that works cross process and machine (network file systems)",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha test/test.js"
   },
   "bugs": {
     "url": "https://github.com/IndigoUnited/node-proper-lockfile/issues/"
@@ -28,12 +28,15 @@
     "err-code": "^0.1.0",
     "extend": "^1.3.0",
     "graceful-fs": "^3.0.2",
-    "rimraf": "^2.2.8",
-    "uuid": "^1.4.1"
+    "retry": "^0.6.1"
   },
   "devDependencies": {
+    "buffered-spawn": "^0.2.2",
     "expect.js": "^0.3.1",
-    "mocha": "^1.18.2"
+    "istanbul": "^0.3.0",
+    "mocha": "^1.18.2",
+    "rimraf": "^2.2.8",
+    "stable": "^0.1.5"
   },
   "engines": {
     "node": ">=0.10.0"

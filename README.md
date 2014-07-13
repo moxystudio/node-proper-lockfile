@@ -12,26 +12,23 @@ A lockfile utility based on fs that works cross process and machine (network fil
 
 There are various ways to achieve [file locking](http://en.wikipedia.org/wiki/File_locking).
 
-This library utilizes the `rename` strategy which works atomically on any kind of file system, even network based ones.
-
-Whenever a lock is requested, a temporary file is created and then renamed to the lockfile name. The lockfile path is based on the file path you are trying to lock by suffixing it with `.lock`.
+This library utilizes the `mkdir` strategy which works atomically on any kind of file system, even network based ones.
+The lockfile path is based on the file path you are trying to lock by suffixing it with `.lock`.
 
 When a lock is successfully acquired, the lockfile's `mtime` (modified time) is periodically updated to prevent staleness. This allows to effectively check if a lock is stale by checking its `mtime` against a stale threshold. If the update of the mtime fails several times, the lock might be compromised.
-
-Optionally, the lockfile can be constantly monitored with `fs.watch` so that you are reported if your lock is compromised earlier (might not work on NFS).
 
 
 ### Comparison
 
 This library is similar to [lockfile](https://github.com/isaacs/lockfile) but the later has some drawbacks:
 
-- It relies on `open` with `O_EXCL` flag which is known by having problems in network file systems. `proper-lockfile` uses `rename` which doesn't have this issue.
+- It relies on `open` with `O_EXCL` flag which is known by having problems in network file systems. `proper-lockfile` uses `mkdir` which doesn't have this issue.
 
 > O_EXCL is broken on NFS file systems; programs which rely on it for performing locking tasks will contain a race condition.
 
 - The lockfile staleness check is done via creation time, which is unsuitable for long running processes. `proper-lockfile` constantly updates lockfiles mtime to do proper staleness check.
 
-- It does not check if the lockfile was compromised, which can led to undesirable situations. `proper-lockfile` checks the lockfile when updating the mtime as well as optionally using `fs.watch` to monitor it.
+- It does not check if the lockfile was compromised, which can led to undesirable situations. `proper-lockfile` checks the lockfile when updating the mtime.
 
 
 ## Usage
@@ -47,7 +44,9 @@ If the lock get compromised, the provided `compromised` function will be called 
 Available options:
 
 - `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (`false` to disable)
-- `watch`: Watches the lockfile, defauls to `false` (`false` to disable)
+- `update`: The interval in which the lockfile's mtime will be updated, defaults to `5000`
+- `retries`: The maximum number of retries, defaults to `0`
+- `retryWait`: The maximum number of milliseconds to wait between each retry, defaults to `30000`.
 - `resolve`: Resolve the file path to a canonical path to handle heterogeneous paths and symlinks, defaults to `true`
 - `fs`: A custom fs to use, defaults to node's fs
 
@@ -55,13 +54,12 @@ Available options:
 ```js
 var lockfile = require('proper-lockfile');
 
-lockfile.lock('some/file', function (err, unlock, lockfile) {
+lockfile.lock('some/file', function (err, unlock, lockpath) {
     if (err) {
         throw err;      // Lock failed
     }
 
     // Do something while the file is locked
-    // You can even write data to the lockfile
 
     // Call the provided unlock function when you're done
     // Note that you can optionally handle any unlock errors
