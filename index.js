@@ -116,16 +116,12 @@ function lock(file, options, callback, compromised) {
     }, options);
 
     options.retries = options.retries || 0;
-
     if (typeof options.retries === 'number') {
         options.retries = { retries: options.retries };
     }
-    if (options.stale > 0) {
-        options.stale = Math.max(options.stale, 1000);
-    }
-    if (options.update > 0) {
-        options.update = Math.max(options.update, 1000);
-    }
+
+    options.stale = Math.max(options.stale || 0, 2000);
+    options.update = Math.max(Math.min(options.update || 0, options.stale - 1000), 1000);
 
     // Resolve to a canonical file path
     canonicalPath(file, options, function (err, file) {
@@ -155,9 +151,7 @@ function lock(file, options, callback, compromised) {
                 };
 
                 // We must keep the lock fresh to avoid staleness
-                if (options.update > 0) {
-                    updateLock(file, options);
-                }
+                updateLock(file, options);
 
                 callback(null, function (unlockCallback) {
                     options = extend({}, options, { resolve: false });  // Not necessary to resolve twice

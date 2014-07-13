@@ -29,6 +29,8 @@ describe('.lock()', function () {
         lockfile.remove(tmpFile, rimraf.bind(rimraf, tmpFile, next));
     });
 
+    this.timeout(5000);
+
     it('should fail if the file does not exist', function (next) {
         lockfile.lock('filethatwillneverexist', function (err) {
             expect(err).to.be.an(Error);
@@ -108,17 +110,45 @@ describe('.lock()', function () {
         }, next);
     });
 
-    it('should not verify staleness if stale is disabled', function (next) {
-        var mtime = (Date.now() - 60000) / 1000;
+    it('should set the stale to a minimum of 2000', function (next) {
+        lockfile.lock(tmpFile, function (err) {
+            expect(err).to.not.be.ok();
 
-        fs.mkdirSync(tmpFileLock);
-        fs.utimesSync(tmpFileLock, mtime, mtime);
+            setTimeout(function () {
+                lockfile.lock(tmpFile, { stale: 100 }, function (err) {
+                    expect(err).to.be.an(Error);
+                    expect(err.code).to.be('ELOCK');
+                }, next);
+            }, 200);
 
-        lockfile.lock(tmpFile, { stale: false }, function (err) {
-            expect(err).to.be.an(Error);
-            expect(err.code).to.be('ELOCK');
+            setTimeout(function () {
+                lockfile.lock(tmpFile, { stale: 100 }, function (err) {
+                    expect(err).to.not.be.ok();
 
-            next();
+                    next();
+                }, next);
+            }, 2200);
+        }, next);
+    });
+
+    it('should set the stale to a minimum of 2000 (falsy)', function (next) {
+        lockfile.lock(tmpFile, function (err) {
+            expect(err).to.not.be.ok();
+
+            setTimeout(function () {
+                lockfile.lock(tmpFile, { stale: false }, function (err) {
+                    expect(err).to.be.an(Error);
+                    expect(err.code).to.be('ELOCK');
+                }, next);
+            }, 200);
+
+            setTimeout(function () {
+                lockfile.lock(tmpFile, { stale: false }, function (err) {
+                    expect(err).to.not.be.ok();
+
+                    next();
+                }, next);
+            }, 2200);
         }, next);
     });
 
@@ -181,16 +211,12 @@ describe('.lock()', function () {
     });
 
     it('should update the lock mtime automatically', function (next) {
-        this.timeout(10000);
-
         lockfile.lock(tmpFile, { update: 1000 }, function (err) {
             var mtime;
 
             expect(err).to.not.be.ok();
 
-            setTimeout(function () {
-                mtime = fs.statSync(tmpFileLock).mtime;
-            }, 100);
+            mtime = fs.statSync(tmpFileLock).mtime;
 
             // First update occurs at 1000ms
             setTimeout(function () {
@@ -210,23 +236,57 @@ describe('.lock()', function () {
         }, next);
     });
 
-    it('should not update the lock mtime if update is disabled', function (next) {
-        this.timeout(10000);
-
-        lockfile.lock(tmpFile, { update: false }, function (err) {
-            var mtime;
+    it('should set update to a minimum of 1000', function (next) {
+        lockfile.lock(tmpFile, { update: 100 }, function (err) {
+            var mtime = fs.statSync(tmpFileLock).mtime.getTime();
 
             expect(err).to.not.be.ok();
 
             setTimeout(function () {
-                mtime = fs.statSync(tmpFileLock).mtime;
-            }, 100);
+                expect(mtime).to.equal(fs.statSync(tmpFileLock).mtime.getTime());
+            }, 200);
 
             setTimeout(function () {
-                var stat = fs.statSync(tmpFileLock);
-                expect(stat.mtime.getTime()).to.equal(mtime.getTime());
+                expect(fs.statSync(tmpFileLock).mtime.getTime()).to.be.greaterThan(mtime);
+
                 next();
-            }, 6000);
+            }, 1200);
+        }, next);
+    });
+
+    it('should set update to a minimum of 1000 (falsy)', function (next) {
+        lockfile.lock(tmpFile, { update: false }, function (err) {
+            var mtime = fs.statSync(tmpFileLock).mtime.getTime();
+
+            expect(err).to.not.be.ok();
+
+            setTimeout(function () {
+                expect(mtime).to.equal(fs.statSync(tmpFileLock).mtime.getTime());
+            }, 200);
+
+            setTimeout(function () {
+                expect(fs.statSync(tmpFileLock).mtime.getTime()).to.be.greaterThan(mtime);
+
+                next();
+            }, 1200);
+        }, next);
+    });
+
+    it('should set update to a maximum of stale - 1000', function (next) {
+        lockfile.lock(tmpFile, { update: 6000, stale: 5000 }, function (err) {
+            var mtime = fs.statSync(tmpFileLock).mtime.getTime();
+
+            expect(err).to.not.be.ok();
+
+            setTimeout(function () {
+                expect(fs.statSync(tmpFileLock).mtime.getTime()).to.equal(mtime);
+            }, 3500);
+
+            setTimeout(function () {
+                expect(fs.statSync(tmpFileLock).mtime.getTime()).to.be.greaterThan(mtime);
+
+                next();
+            }, 4500);
         }, next);
     });
 
@@ -327,8 +387,6 @@ describe('.lock()', function () {
     });
 
     it('should release the lock after calling the provided unlock function (without callback)', function (next) {
-        this.timeout(5000);
-
         lockfile.lock(tmpFile, function (err, unlock) {
             expect(err).to.not.be.ok();
 
@@ -365,6 +423,8 @@ describe('.remove()/unlock()', function () {
 
         lockfile.remove(tmpFile, rimraf.bind(rimraf, tmpFile, next));
     });
+
+    this.timeout(5000);
 
     it('should succeed if not locked', function (next) {
         lockfile.remove(tmpFile, function (err) {
@@ -514,6 +574,14 @@ describe('.remove()/unlock()', function () {
 });
 
 describe('misc', function () {
+    afterEach(function (next) {
+        if (!fs.existsSync(tmpFileLock)) {
+            return next();
+        }
+
+        lockfile.remove(tmpFile, rimraf.bind(rimraf, tmpFile, next));
+    });
+
     it('should not contain suspicious nodejs native fs calls', function () {
         expect(/\s{2,}fs\.[a-z]+/i.test(lockfileContents)).to.be(false);
     });
