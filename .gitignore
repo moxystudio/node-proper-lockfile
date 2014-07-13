@@ -3,3 +3,4 @@
 /test/tmp*
 /test/*.log
 /coverage
+.coveralls.yml

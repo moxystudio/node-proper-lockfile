@@ -1,4 +1,4 @@
-# proper-lockfile [![Build Status](https://travis-ci.org/IndigoUnited/node-proper-lockfile.svg?branch=master)](https://travis-ci.org/IndigoUnited/node-proper-lockfile)
+# proper-lockfile [![Build Status](https://travis-ci.org/IndigoUnited/node-proper-lockfile.svg?branch=master)](https://travis-ci.org/IndigoUnited/node-proper-lockfile) [![Coverage Status](https://coveralls.io/repos/IndigoUnited/node-proper-lockfile/badge.png?branch=master)](https://coveralls.io/r/IndigoUnited/node-proper-lockfile?branch=master)
 
 A lockfile utility based on fs that works cross process and machine (network file systems).
 
