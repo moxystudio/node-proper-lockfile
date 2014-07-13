@@ -76,7 +76,7 @@ function updateLock(file, options) {
                 meta.updateDelay = null;
                 updateLock(file, options);
             // If it failed to update the lockfile, check if it is compromised
-            // by analyzing the error code and the last refresh
+            // by analyzing the error code and the last mtime update
             } else {
                 if (err.code === 'ENOENT' || meta.lastUpdate < Date.now() - options.stale - 2000) {
                     remove(file, options, function () {
@@ -190,7 +190,7 @@ function remove(file, options, callback) {
 
         meta = locks[file];
         if (meta) {
-            // Cancel lock refresh
+            // Cancel lock mtime update
             meta.updateTimeout && clearTimeout(meta.updateTimeout);
             delete locks[file];
         }
