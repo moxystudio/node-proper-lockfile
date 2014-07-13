@@ -11,7 +11,7 @@ var locks = {};
 function acquireLock(file, options, callback, compromised) {
     var lockfile = file + '.lock';
 
-    // Rename tmp file it to lockfile (atomic operation)
+    // Use mkdir to create the lockfile (atomic operation)
     options.fs.mkdir(lockfile, function (err) {
         if (err) {
             // Don't check staleness if it's disabled
