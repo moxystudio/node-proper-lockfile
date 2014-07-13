@@ -37,8 +37,8 @@ This library is similar to [lockfile](https://github.com/isaacs/lockfile) but th
 
 Tries to acquire a lock on `file`.
 
-If the lock succeeds, an `unlock` function is given that should be called when you want to release the lock.   
-If the lock get compromised, the provided `compromised` function will be called (optionally).   
+If the lock succeeds, an `unlock` function is provided that should be called when you want to release the lock.   
+If the lock gets compromised, the provided `compromised` function will be called (optionally).   
 
 
 Available options:
