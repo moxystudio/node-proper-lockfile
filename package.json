@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha test/test.js",
+    "test-travis": "istanbul cover node_modules/.bin/_mocha --report lcovonly",
     "coverage": "istanbul cover node_modules/.bin/_mocha",
     "open-coverage": "open coverage/lcov-report/index.html"
   },
