@@ -198,11 +198,7 @@ function remove(file, options, callback) {
         // Remove lockfile
         options.fs.rmdir(file + '.lock', function (err) {
             // Ignore ENOENT errors when removing the directory
-            if (err && err.code !== 'ENOENT') {
-                return callback(err);
-            }
-
-            callback();
+            callback(err && err.code !== 'ENOENT' ? err : null);
         });
     });
 }
