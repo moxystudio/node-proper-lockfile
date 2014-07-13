@@ -80,10 +80,8 @@ lockfile.lock('some/file', function (err, unlock) {
 
 Removes a lock.
 
-You should NOT call this function to unlock a previously acquired lock. Use the provided `unlock` function as seen above.
-
-This function is provided to simply remove the lock, but its unsafe. If something is owning the lock on `file`, it will get compromised.
-
+You should NOT call this function to unlock a lockfile that isn't owned by you.
+This function is an alternative to the provided `unlock` function (as explained above) and you should ONLY call it if you own the lock.
 
 Available options:
 
