@@ -160,7 +160,6 @@ function lock(file, options, callback, compromised) {
                 }
 
                 callback(null, function (unlockCallback) {
-                    unlockCallback = unlockCallback || function () {};  // Unlock callback is optional
                     options = extend({}, options, { resolve: false });  // Not necessary to resolve twice
                     remove(file, options, unlockCallback);
                 });
@@ -179,6 +178,8 @@ function remove(file, options, callback) {
         fs: fs,
         resolve: true
     }, options);
+
+    callback = callback || function () {};
 
     // Resolve to a canonical file path
     canonicalPath(file, options, function (err, file) {

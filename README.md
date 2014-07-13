@@ -76,7 +76,7 @@ lockfile.lock('some/file', function (err, unlock) {
 ```
 
 
-### .remove(file, [options], callback)
+### .remove(file, [options], [callback])
 
 Removes a lock.
 
