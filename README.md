@@ -64,7 +64,7 @@ lockfile.lock('some/file', function (err, unlock) {
     unlock();
 
     // Note that you can optionally handle unlock errors
-    // Though it's not really since it will eventually get stale
+    // Though it's not mandatory since it will eventually get stale
     /*unlock(function (err) {
         // At this point the lock was effectively released or an error
         // ocurred while removing it
