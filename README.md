@@ -43,7 +43,7 @@ If the lock gets compromised, the `compromised` function will be called (optiona
 
 Available options:
 
-- `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (minimum value is `2000)
+- `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (minimum value is `2000`)
 - `update`: The interval in milliseconds in which the lockfile's mtime will be updated, defaults to `5000` (minimum value is `1000`, maximum value is `stale - 1000`)
 - `retries`: The number of retries or a [retry](https://www.npmjs.org/package/retry) options object, defaults to `0`
 - `resolve`: Resolve to a canonical path to handle relative paths & symlinks properly, defaults to `true`
@@ -63,8 +63,8 @@ lockfile.lock('some/file', function (err, unlock) {
     // Call the provided unlock function when you're done
     unlock();
 
-    // Note that you can optionally handle unlock errors though it's not really
-    // necessary, since it will eventually get stale
+    // Note that you can optionally handle unlock errors
+    // Though it's not really since it will eventually get stale
     /*unlock(function (err) {
         // At this point the lock was effectively released or an error
         // ocurred while removing it
@@ -111,7 +111,7 @@ lockfile.lock('some/file', function (err) {
 
 Simply run the test suite with `$ npm test`
 
-The test suite is very extensive. We even have a stress test to guarantee exclusiveness of locks.
+The test suite is very extensive. There's even a stress test to guarantee exclusiveness of locks.
 
 
 ## License
