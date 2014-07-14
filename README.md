@@ -64,7 +64,7 @@ lockfile.lock('some/file', function (err, unlock) {
     unlock();
 
     // Note that you can optionally handle unlock errors
-    // Though it's not mandatory since it will eventually get stale
+    // Though it's not mandatory since it will eventually stale
     /*unlock(function (err) {
         // At this point the lock was effectively released or an error
         // ocurred while removing it
@@ -78,13 +78,12 @@ lockfile.lock('some/file', function (err, unlock) {
 
 ### .remove(file, [options], [callback])
 
-Removes a lock.
+Removes a lock previously acquired over `file`.
 
 You should NOT call this function to unlock a lockfile that isn't owned by you.
 This function is an alternative to the `unlock` function (as explained above) and you should ONLY call it if you own the lock.
 
-The `callback` is optional because even if the removal of the lock failed, it will eventually get stale since
-the lockfile's mtime will no longer be updated.
+The `callback` is optional because even if the removal of the lock failed, the lockfile's mtime will no longer be updated causing it to eventually stale.
 
 
 Available options:
