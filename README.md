@@ -103,6 +103,12 @@ lockfile.lock('some/file', function (err) {
 
     // Later..
     lockfile.remove('some/file');
+
+    // or..
+    /*lockfile.remove('some/file', function (err) {
+        // At this point the lock was effectively released or an error
+        // ocurred while removing it
+    });*/
 });
 ```
 
