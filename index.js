@@ -172,8 +172,8 @@ function lock(file, options, compromised, callback) {
     }
 
     options = extend({
-        stale: 10000,   // 10 secs
-        update: 5000,   // 5 secs
+        stale: 10000,
+        update: null,
         resolve: true,
         retries: 0,
         fs: fs
@@ -182,7 +182,8 @@ function lock(file, options, compromised, callback) {
     options.retries = options.retries || 0;
     options.retries = typeof options.retries === 'number' ? { retries: options.retries } : options.retries;
     options.stale = Math.max(options.stale || 0, 2000);
-    options.update = Math.max(Math.min(options.update || 0, Math.round(options.stale / 2)), 1000);
+    options.update = options.update == null ? options.stale / 2 : options.update || 0;
+    options.update = Math.max(Math.min(options.update, options.stale / 2), 1000);
     compromised = compromised || function (err) { throw err; };
 
     // Resolve to a canonical file path
