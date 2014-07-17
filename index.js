@@ -27,17 +27,11 @@ function canonicalPath(file, options, callback) {
 }
 
 function acquireLock(file, options, callback) {
-    // Fast fail if a lock is acquired here
-    if (locks[file]) {
-        return callback(errcode('Lock file is already being hold', 'ELOCKED', { file: file }));
-    }
-
     // Use mkdir to create the lockfile (atomic operation)
     options.fs.mkdir(getLockFile(file), function (err) {
         var uid;
 
-        // If we successfuly created the lockfile,
-        // write the uidfile and we are done
+        // If we successfuly created the lockfile, write the uidfile and we are done
         if (!err) {
             uid = uuid.v4();
             return options.fs.writeFile(getUidFile(file), uid, function (err) {
@@ -122,18 +116,14 @@ function updateLock(file, options) {
 
             // Verify if we are within the stale threshold
             if (lock.lastUpdate <= Date.now() - options.stale) {
-                return unlock(file, extend({}, options, { resolve: false }), function () {
-                    lock.compromised(lock.updateError || errcode('Unable to update lock within the stale threshold', 'EUPDATE'));
-                });
+                return compromisedLock(file, lock, lock.updateError || 'Unable to update lock within the stale threshold');
             }
 
             // If it failed to update the lockfile, keep trying unless
             // the lockfile/uidfile was deleted!
             if (err) {
                 if (err.code === 'ENOENT') {
-                    return unlock(file, extend({}, options, { resolve: false }), function () {
-                        lock.compromised(err);
-                    });
+                    return compromisedLock(file, lock, err);
                 }
 
                 lock.updateError = err;
@@ -143,9 +133,7 @@ function updateLock(file, options) {
 
             // Verify lock uid
             if (result.read.toString().trim() !== lock.uid) {
-                lock.released = true;
-                delete locks[file];
-                return lock.compromised(errcode('Lock uid mismatch', 'EMISMATCH'));
+                return compromisedLock(file, lock, 'Lock uid mismatch');
             }
 
             // All ok, keep updating..
@@ -155,6 +143,16 @@ function updateLock(file, options) {
             updateLock(file, options);
         });
     }, lock.updateDelay);
+}
+
+function compromisedLock(file, lock, err) {
+    lock.released = true;
+
+    if (locks[file] === lock) {
+        delete locks[file];
+    }
+
+    lock.compromised(errcode(err, 'ECOMPROMISED'));
 }
 
 // -----------------------------------------
@@ -220,10 +218,8 @@ function lock(file, options, compromised, callback) {
                 updateLock(file, options);
 
                 callback(null, function (releasedCallback) {
-                    releasedCallback = releasedCallback || function () {};
-
                     if (lock.released) {
-                        return releasedCallback(errcode('Lock is already released', 'ERELEASED'));
+                        return releasedCallback && releasedCallback(errcode('Lock is already released', 'ERELEASED'));
                     }
 
                     // Not necessary to resolve twice when unlocking
@@ -258,7 +254,7 @@ function unlock(file, options, callback) {
         // Skip if the lock is not acquired
         lock = locks[file];
         if (!lock) {
-            return callback(errcode('Lock is not acquired', 'ENOTACQUIRED'));
+            return callback(errcode('Lock is not acquired/owned by you', 'ENOTACQUIRED'));
         }
 
         lock.updateTimeout && clearTimeout(lock.updateTimeout);  // Cancel lock mtime update

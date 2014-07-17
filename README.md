@@ -33,6 +33,16 @@ This library is similar to [lockfile](https://github.com/isaacs/lockfile) but th
 - It does not check if the lockfile was compromised which can led to undesirable situations. `proper-lockfile` checks the lockfile when updating the `mtime`.
 
 
+### When can a lock be compromised?
+
+1. When the `lockfile` is manually deleted and the update of the lock `mtime` then fails with ENOENT
+2. When the `lockfile` is manually deleted and someone else acquires the lock within the update period
+3. When different `stale` and/or `update` configurations are being used for the same file
+4. When the update of the `lockfile` took longer than the `stale` threshold
+
+As you can see, all these points are originated from human intervention, except point `4` which is unlikely to happen unless you block the event loop for high periods of times or the `fs` calls are really slow.
+
+
 ## Usage
 
 ### .lock(file, [options], [compromised], callback)

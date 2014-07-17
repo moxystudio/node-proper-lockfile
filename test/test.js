@@ -338,11 +338,10 @@ describe('.lock()', function () {
     });
 
     it('should call the compromised function if ENOENT was detected when updating the lockfile mtime', function (next) {
-        this.timeout(10000);
-
         lockfile.lock(tmpFile, { update: 1000 }, function (err) {
             expect(err).to.be.an(Error);
-            expect(err.code).to.be('ENOENT');
+            expect(err.code).to.be('ECOMPROMISED');
+            expect(err.message).to.contain('ENOENT');
 
             lockfile.lock(tmpFile, function (err) {
                 expect(err).to.not.be.ok();
@@ -368,6 +367,7 @@ describe('.lock()', function () {
         lockfile.lock(tmpFile, { fs: customFs, update: 1000, stale: 5000 }, function (err) {
             expect(err).to.be.an(Error);
             expect(err.message).to.contain('foo');
+            expect(err.code).to.be('ECOMPROMISED');
 
             next();
 
@@ -389,23 +389,51 @@ describe('.lock()', function () {
 
         lockfile.lock(tmpFile, { fs: customFs, update: 1000, stale: 5000 }, function (err) {
             expect(err).to.be.an(Error);
-            expect(err.code).to.be('EUPDATE');
+            expect(err.code).to.be('ECOMPROMISED');
+            expect(err.message).to.contain('threshold');
+            expect(fs.existsSync(tmpFileLock)).to.be(true);
 
             next();
-
         }, function (err) {
             expect(err).to.not.be.ok();
         });
     });
 
-    it('should call the compromised function if the lock uid mismatches', function (next) {
-        var lock;
+    it('should call the compromised function if lock was acquired by someone else due to staleness', function (next) {
+        var customFs = extend({}, fs);
 
+        customFs.utimes = function (path, atime, mtime, callback) {
+            setTimeout(function () {
+                callback(new Error('foo'));
+            }, 6000);
+        };
+
+        this.timeout(10000);
+
+        lockfile.lock(tmpFile, { fs: customFs, update: 1000, stale: 5000 }, function (err) {
+            expect(err).to.be.an(Error);
+            expect(err.code).to.be('ECOMPROMISED');
+            expect(fs.existsSync(tmpFileLock)).to.be(true);
+
+            next();
+        }, function (err) {
+            expect(err).to.not.be.ok();
+
+            setTimeout(function () {
+                lockfile.lock(tmpFile, { stale: 5000 }, function (err) {
+                    expect(err).to.not.be.ok();
+                });
+            }, 5500);
+        });
+    });
+
+    it('should call the compromised function if the lock uid mismatches', function (next) {
         this.timeout(10000);
 
         lockfile.lock(tmpFile, { update: 3000 }, function (err) {
             expect(err).to.be.an(Error);
-            expect(err.code).to.be('EMISMATCH');
+            expect(err.code).to.be('ECOMPROMISED');
+            expect(err.message).to.contain('mismatch');
             expect(fs.existsSync(tmpFileLock)).to.be(true);
 
             next();
@@ -427,12 +455,12 @@ describe('.lock()', function () {
 
         this.timeout(10000);
 
-        originalException = process.listeners('uncaughtException').pop()
+        originalException = process.listeners('uncaughtException').pop();
         process.removeListener('uncaughtException', originalException);
 
         process.once('uncaughtException', function (err) {
             expect(err).to.be.an(Error);
-            expect(err.code).to.be('ENOENT');
+            expect(err.code).to.be('ECOMPROMISED');
 
             process.nextTick(function () {
                 process.on('uncaughtException', originalException);
