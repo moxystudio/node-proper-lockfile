@@ -5,90 +5,17 @@ var path = require('path');
 var extend = require('extend');
 var errcode = require('err-code');
 var retry = require('retry');
+var async = require('async');
+var uuid = require('uuid');
 
 var locks = {};
 
-function acquireLock(file, options, callback, compromised) {
-    var lockfile = file + '.lock';
-
-    // Use mkdir to create the lockfile (atomic operation)
-    options.fs.mkdir(lockfile, function (err) {
-        // If it succeeded, we are done
-        if (!err) {
-            return callback();
-        }
-
-        // Check if lock is stale
-        // Don't check staleness if it's disabled
-        if (options.stale <= 0) {
-            return callback(errcode('Lock file is already being hold', 'ELOCK', { file: file }));
-        }
-
-        return options.fs.stat(lockfile, function (err, stat) {
-            if (err) {
-                // Retry if the lockfile has been removed (meanwhile)
-                if (err.code === 'ENOENT') {
-                    options = extend({}, options, { stale: 0 });  // Skip stale check to avoid recursiveness
-                    return acquireLock(file, options, callback, compromised);
-                }
-
-                return callback(err);
-            }
-
-            if (stat.mtime.getTime() > Date.now() - options.stale) {
-                return callback(errcode('Lock file is already being hold', 'ELOCK', { file: file }));
-            }
-
-            // If it's stale, remove it and try again!
-            options.fs.rmdir(lockfile, function (err) {
-                // Ignore ENOENT errors because other processes might end
-                // up removing it at the same time
-                if (err && err.code !== 'ENOENT') {
-                    return callback(err);
-                }
-
-                options = extend({}, options, { stale: 0 });  // Skip stale check to avoid recursiveness
-                acquireLock(file, options, callback, compromised);
-            });
-        });
-    });
+function getLockFile(file) {
+    return file + '.lock';
 }
 
-function updateLock(file, options) {
-    var meta = locks[file];
-
-    meta.updateDelay = meta.updateDelay || options.update;
-    meta.updateTimeout = setTimeout(function () {
-        var mtime = Date.now() / 1000;
-
-        meta.updateTimeout = null;
-
-        // Update the modified time of the lockfile
-        options.fs.utimes(file + '.lock', mtime, mtime, function (err) {
-            // Ignore if the lock was removed meanwhile
-            if (meta !== locks[file]) {
-                return;
-            }
-
-            // If the update succeded, keep updating the lock
-            if (!err) {
-                meta.lastUpdate = Date.now();
-                meta.updateDelay = null;
-                updateLock(file, options);
-            // If it failed to update the lockfile, check if it is compromised
-            // by analyzing the error code and the last mtime update
-            } else {
-                if (err.code === 'ENOENT' || meta.lastUpdate < Date.now() - options.stale - 2000) {
-                    remove(file, options, function () {
-                        meta.compromisedFn && meta.compromisedFn(err);
-                    });
-                } else {
-                    meta.updateDelay = 1000;
-                    updateLock(file, options);
-                }
-            }
-        });
-    }, meta.updateDelay);
+function getUidFile(file) {
+    return path.join(getLockFile(file), '.uid');
 }
 
 function canonicalPath(file, options, callback) {
@@ -99,12 +26,149 @@ function canonicalPath(file, options, callback) {
     options.fs.realpath(file, callback);
 }
 
+function acquireLock(file, options, callback) {
+    // Fast fail if a lock is acquired here
+    if (locks[file]) {
+        return callback(errcode('Lock file is already being hold', 'ELOCKED', { file: file }));
+    }
+
+    // Use mkdir to create the lockfile (atomic operation)
+    options.fs.mkdir(getLockFile(file), function (err) {
+        var uid;
+
+        // If we successfuly created the lockfile,
+        // write the uidfile and we are done
+        if (!err) {
+            uid = uuid.v4();
+            return options.fs.writeFile(getUidFile(file), uid, function (err) {
+                if (err) {
+                    return removeLock(file, options, function () {
+                        callback(err);
+                    });
+                }
+
+                return callback(null, uid);
+            });
+        }
+
+        // Otherwise, check if lock is stale by analyzing the file mtime
+        if (options.stale <= 0) {
+            return callback(errcode('Lock file is already being hold', 'ELOCKED', { file: file }));
+        }
+
+        options.fs.stat(getLockFile(file), function (err, stat) {
+            if (err) {
+                // Retry if the lockfile has been removed (meanwhile)
+                // Skip stale check to avoid recursiveness
+                if (err.code === 'ENOENT') {
+                    return acquireLock(file, extend({}, options, { stale: 0 }), callback);
+                }
+
+                return callback(err);
+            }
+
+            if (stat.mtime.getTime() >= Date.now() - options.stale) {
+                return callback(errcode('Lock file is already being hold', 'ELOCKED', { file: file }));
+            }
+
+            // If it's stale, remove it and try again!
+            // Skip stale check to avoid recursiveness
+            removeLock(file, options, function (err) {
+                if (err) {
+                    return callback(err);
+                }
+
+                acquireLock(file, extend({}, options, { stale: 0 }), callback);
+            });
+        });
+    });
+}
+
+function removeLock(file, options, callback) {
+    // Remove uidfile, ignoring ENOENT errors
+    options.fs.unlink(getUidFile(file), function (err) {
+        if (err && err.code !== 'ENOENT') {
+            return callback(err);
+        }
+
+        // Remove lockfile, ignoring ENOENT errors
+        options.fs.rmdir(getLockFile(file), function (err) {
+            if (err && err.code !== 'ENOENT') {
+                return callback(err);
+            }
+
+            callback();
+        });
+    });
+}
+
+function updateLock(file, options) {
+    var lock = locks[file];
+
+    lock.updateDelay = lock.updateDelay || options.update;
+    lock.updateTimeout = setTimeout(function () {
+        var mtime = Date.now() / 1000;
+
+        lock.updateTimeout = null;
+
+        async.parallel({
+            read: options.fs.readFile.bind(options.fs, getUidFile(file)),
+            utimes: options.fs.utimes.bind(options.fs, getLockFile(file), mtime, mtime),
+        }, function (err, result) {
+            // Ignore if the lock was released
+            if (lock.released) {
+                return;
+            }
+
+            // Verify if we are within the stale threshold
+            if (lock.lastUpdate <= Date.now() - options.stale) {
+                return unlock(file, extend({}, options, { resolve: false }), function () {
+                    lock.compromised(lock.updateError || errcode('Unable to update lock within the stale threshold', 'EUPDATE'));
+                });
+            }
+
+            // If it failed to update the lockfile, keep trying unless
+            // the lockfile/uidfile was deleted!
+            if (err) {
+                if (err.code === 'ENOENT') {
+                    return unlock(file, extend({}, options, { resolve: false }), function () {
+                        lock.compromised(err);
+                    });
+                }
+
+                lock.updateError = err;
+                lock.updateDelay = 1000;
+                return updateLock(file, options);
+            }
+
+            // Verify lock uid
+            if (result.read.toString().trim() !== lock.uid) {
+                lock.released = true;
+                delete locks[file];
+                return lock.compromised(errcode('Lock uid mismatch', 'EMISMATCH'));
+            }
+
+            // All ok, keep updating..
+            lock.lastUpdate = Date.now();
+            lock.updateError = null;
+            lock.updateDelay = null;
+            updateLock(file, options);
+        });
+    }, lock.updateDelay);
+}
+
 // -----------------------------------------
 
-function lock(file, options, callback, compromised) {
+function lock(file, options, compromised, callback) {
     if (typeof options === 'function') {
-        callback = options;
+        callback = compromised;
+        compromised = options;
         options = null;
+    }
+
+    if (!callback) {
+        callback = compromised;
+        compromised = null;
     }
 
     options = extend({
@@ -116,12 +180,10 @@ function lock(file, options, callback, compromised) {
     }, options);
 
     options.retries = options.retries || 0;
-    if (typeof options.retries === 'number') {
-        options.retries = { retries: options.retries };
-    }
-
+    options.retries = typeof options.retries === 'number' ? { retries: options.retries } : options.retries;
     options.stale = Math.max(options.stale || 0, 2000);
-    options.update = Math.max(Math.min(options.update || 0, options.stale - 1000), 1000);
+    options.update = Math.max(Math.min(options.update || 0, Math.round(options.stale / 2)), 1000);
+    compromised = compromised || function (err) { throw err; };
 
     // Resolve to a canonical file path
     canonicalPath(file, options, function (err, file) {
@@ -134,7 +196,9 @@ function lock(file, options, callback, compromised) {
         // Attempt to acquire the lock
         operation = retry.operation(options.retries);
         operation.attempt(function () {
-            acquireLock(file, options, function (err) {
+            acquireLock(file, options, function (err, uid) {
+                var lock;
+
                 if (operation.retry(err)) {
                     return;
                 }
@@ -144,25 +208,32 @@ function lock(file, options, callback, compromised) {
                 }
 
                 // We now own the lock
-                locks[file] = {
+                locks[file] = lock = {
+                    uid: uid,
                     options: options,
-                    compromisedFn: compromised,
+                    compromised: compromised,
                     lastUpdate: Date.now()
                 };
 
                 // We must keep the lock fresh to avoid staleness
                 updateLock(file, options);
 
-                callback(null, function (unlockCallback) {
-                    options = extend({}, options, { resolve: false });  // Not necessary to resolve twice
-                    remove(file, options, unlockCallback);
+                callback(null, function (releasedCallback) {
+                    releasedCallback = releasedCallback || function () {};
+
+                    if (lock.released) {
+                        return releasedCallback(errcode('Lock is already released', 'ERELEASED'));
+                    }
+
+                    // Not necessary to resolve twice when unlocking
+                    unlock(file, extend({}, options, { resolve: false }), releasedCallback);
                 });
-            }, compromised);
+            });
         });
     });
 }
 
-function remove(file, options, callback) {
+function unlock(file, options, callback) {
     if (typeof options === 'function') {
         callback = options;
         options = null;
@@ -177,24 +248,23 @@ function remove(file, options, callback) {
 
     // Resolve to a canonical file path
     canonicalPath(file, options, function (err, file) {
-        var meta;
+        var lock;
 
         if (err) {
             return callback(err);
         }
 
-        meta = locks[file];
-        if (meta) {
-            // Cancel lock mtime update
-            meta.updateTimeout && clearTimeout(meta.updateTimeout);
-            delete locks[file];
+        // Skip if the lock is not acquired
+        lock = locks[file];
+        if (!lock) {
+            return callback(errcode('Lock is not acquired', 'ENOTACQUIRED'));
         }
 
-        // Remove lockfile
-        options.fs.rmdir(file + '.lock', function (err) {
-            // Ignore ENOENT errors when removing the directory
-            callback(err && err.code !== 'ENOENT' ? err : null);
-        });
+        lock.updateTimeout && clearTimeout(lock.updateTimeout);  // Cancel lock mtime update
+        lock.released = true;                                    // Signal the lock has been released
+        delete locks[file];                                   // Delete from acquired
+
+        removeLock(file, options, callback);
     });
 }
 
@@ -202,9 +272,13 @@ function remove(file, options, callback) {
 /* istanbul ignore next */
 process.on('exit', function () {
     Object.keys(locks).forEach(function (file) {
-        try { locks[file].options.fs.rmdir(file + '.lock'); } catch (e) {}
+        try {
+            locks[file].options.fs.unlinkSync.sync(getUidFile(file));
+            locks[file].options.fs.rmdirSync.sync(getLockFile(file));
+        } catch (e) {}
     });
 });
 
+module.exports = lock;
 module.exports.lock = lock;
-module.exports.remove = remove;
+module.exports.unlock = unlock;

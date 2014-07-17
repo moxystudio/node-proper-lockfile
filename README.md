@@ -33,18 +33,17 @@ This library is similar to [lockfile](https://github.com/isaacs/lockfile) but th
 
 ## Usage
 
-### .lock(file, [options], callback, [compromised])
+### .lock(file, [options], [compromised], callback)
 
 Tries to acquire a lock on `file`.
 
 If the lock succeeds, an `unlock` function is provided that should be called when you want to release the lock.   
-If the lock gets compromised, the `compromised` function will be called (optionally).
-
+If the lock gets compromised, the `compromised` function will be called. The default `compromised` function is a simple `throw err`, which will probably the process to die.
 
 Available options:
 
-- `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (minimum value is `2000`)
-- `update`: The interval in milliseconds in which the lockfile's mtime will be updated, defaults to `5000` (minimum value is `1000`, maximum value is `stale - 1000`)
+- `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (minimum value is `5000`)
+- `update`: The interval in milliseconds in which the lockfile's mtime will be updated, defaults to `stale/2` (minimum value is `1000`, maximum value is `stale/2`)
 - `retries`: The number of retries or a [retry](https://www.npmjs.org/package/retry) options object, defaults to `0`
 - `resolve`: Resolve to a canonical path to handle relative paths & symlinks properly, defaults to `true`
 - `fs`: A custom fs to use, defaults to `graceful-fs`
@@ -53,35 +52,30 @@ Available options:
 ```js
 var lockfile = require('proper-lockfile');
 
-lockfile.lock('some/file', function (err, unlock) {
-    if (err) {
-        throw err;      // Lock failed
-    }
+lockfile.lock('some/file', function (err, release) {
+    if (err) throw err;      // Lock failed
 
     // Do something while the file is locked
 
-    // Call the provided unlock function when you're done
-    unlock();
+    // Call the provided release function when you're done
+    release();
 
-    // Note that you can optionally handle unlock errors
+    // Note that you can optionally handle release errors
     // Though it's not mandatory since it will eventually stale
-    /*unlock(function (err) {
+    /*release(function (err) {
         // At this point the lock was effectively released or an error
         // ocurred while removing it
+        if (err) throw err;
     });*/
-}, function (err) {
-    // If we get here, the lock has been compromised
-    // e.g.: the lock has been manually deleted
 });
 ```
 
 
-### .remove(file, [options], [callback])
+### .unlock(file, [options], [callback])
 
-Removes a lock previously acquired over `file`.
+Releases a lock previously acquired over `file`.
 
-You should NOT call this function to unlock a lockfile that isn't owned by you.
-This function is an alternative to the `unlock` function (as explained above) and you should ONLY call it if you own the lock.
+Whenever possible you should use the `release` function to release the lock. Still there are cases in which its hard to keep a reference to it around code. In those cases `.unlock()` might be handy but you should ONLY use it if you are sure you own the lock. The main difference is that `release()` is contextualized with the lock id generated with `lock()` while `.unlock()` is contextualized with the `file`. Having this said, it's a bit safer to use `release()`.
 
 The `callback` is optional because even if the removal of the lock failed, the lockfile's mtime will no longer be updated causing it to eventually stale.
 
@@ -96,9 +90,7 @@ Available options:
 var lockfile = require('proper-lockfile');
 
 lockfile.lock('some/file', function (err) {
-    if (err) {
-        throw err;
-    }
+    if (err) throw err;
 
     // Later..
     lockfile.remove('some/file');
@@ -107,6 +99,7 @@ lockfile.lock('some/file', function (err) {
     /*lockfile.remove('some/file', function (err) {
         // At this point the lock was effectively released or an error
         // ocurred while removing it
+        if (err) throw err;
     });*/
 });
 ```
