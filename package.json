@@ -1,6 +1,6 @@
 {
   "name": "proper-lockfile",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A inter-process and inter-machine lockfile utility that works on a local or network file system.",
   "main": "index.js",
   "scripts": {
