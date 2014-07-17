@@ -17,7 +17,7 @@ The lockfile path is based on the file path you are trying to lock by suffixing 
 
 When a lock is successfully acquired, the lockfile's `mtime` (modified time) is periodically updated to prevent staleness. This allows to effectively check if a lock is stale by checking its `mtime` against a stale threshold. If the update of the mtime fails several times, the lock might be compromised.
 
-Additionally a unique id is generated for each lock that is stored on a file that lives inside the lockfile directory. This unique id is compared each time the lockfile's `mtime` is updated. This improves the compromised check because it detects cases in which two locks are acquired over the same file. This is rare, but can happen if someone manually deletes the lockfile within the update delay of the current owner.
+Additionally a unique id is generated for each lock which is then stored on a file that lives inside the lockfile. This unique id is compared each time the lockfile's `mtime` is updated. This improves the compromised check because it detects cases in which two locks are acquired over the same file. This is rare, but can happen if someone manually deletes the lockfile within the update delay of the current owner.
 
 
 ### Comparison
