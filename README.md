@@ -27,7 +27,7 @@ Additionally a unique id is generated for each lock which is then stored on a fi
 3. When different `stale` and/or `update` configurations are being used for the same file
 4. When the update of the `lockfile` took longer than the `stale` threshold
 
-As you can see, all these points are originated from human intervention, except point `4` which is unlikely to happen unless you block the event loop for high periods of times or the `fs` calls are really slow.
+As you can see, all these points are originated from human intervention, except point `4` which is unlikely to happen unless you block the event loop for high periods of time or the `fs` calls are really slow.
 
 
 ### Comparison
@@ -60,7 +60,6 @@ Available options:
 - `resolve`: Resolve to a canonical path to handle relative paths & symlinks properly, defaults to `true`
 - `fs`: A custom fs to use, defaults to `graceful-fs`
 
-NOTE: It's important that calls to `lock()` have the same `stale` and `update` values for the same file.
 
 ```js
 var lockfile = require('proper-lockfile');
