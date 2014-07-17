@@ -251,7 +251,6 @@ describe('.lock()', function () {
     });
 
     it('should fail if writing the uidfile errors out', function (next) {
-        var mtime = (Date.now() - 60000) / 1000;
         var customFs = extend({}, fs);
 
         customFs.writeFile = function (path, contents, options, callback) {
@@ -263,12 +262,12 @@ describe('.lock()', function () {
             callback(new Error('foo'));
         };
 
-        fs.mkdirSync(tmpFileLock);
-        fs.utimesSync(tmpFileLock, mtime, mtime);
-
         lockfile.lock(tmpFile, { fs: customFs }, function (err) {
             expect(err).to.be.an(Error);
             expect(err.message).to.be('foo');
+
+            expect(fs.existsSync(tmpFileLock)).to.be(false);
+            expect(fs.existsSync(tmpFileLockUid)).to.be(false);
 
             next();
         });

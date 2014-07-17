@@ -1,6 +1,6 @@
 # proper-lockfile [![Build Status](https://travis-ci.org/IndigoUnited/node-proper-lockfile.svg?branch=master)](https://travis-ci.org/IndigoUnited/node-proper-lockfile) [![Coverage Status](https://coveralls.io/repos/IndigoUnited/node-proper-lockfile/badge.png?branch=master)](https://coveralls.io/r/IndigoUnited/node-proper-lockfile?branch=master)
 
-A lockfile utility based on fs that works cross process and machine (network file systems).
+A inter-process and inter-machine lockfile utility that works on a local or network file system.
 
 
 ## Installation
@@ -17,6 +17,8 @@ The lockfile path is based on the file path you are trying to lock by suffixing 
 
 When a lock is successfully acquired, the lockfile's `mtime` (modified time) is periodically updated to prevent staleness. This allows to effectively check if a lock is stale by checking its `mtime` against a stale threshold. If the update of the mtime fails several times, the lock might be compromised.
 
+Additionally a unique id is generated for each lock that is stored on a file that lives inside the lockfile directory. This unique id is compared each time the lockfile's `mtime` is updated. This improves the compromised check because it detects cases in which two locks are acquired over the same file. This is rare, but can happen if someone manually deletes the lockfile within the update delay of the current owner.
+
 
 ### Comparison
 
@@ -26,9 +28,9 @@ This library is similar to [lockfile](https://github.com/isaacs/lockfile) but th
 
 > O_EXCL is broken on NFS file systems; programs which rely on it for performing locking tasks will contain a race condition.
 
-- The lockfile staleness check is done via ctime (creation time) which is unsuitable for long running processes. `proper-lockfile` constantly updates lockfiles mtime to do proper staleness check.
+- The lockfile staleness check is done via `ctime` (creation time) which is unsuitable for long running processes. `proper-lockfile` constantly updates lockfiles `mtime` to do proper staleness check.
 
-- It does not check if the lockfile was compromised which can led to undesirable situations. `proper-lockfile` checks the lockfile when updating the mtime.
+- It does not check if the lockfile was compromised which can led to undesirable situations. `proper-lockfile` checks the lockfile when updating the `mtime`.
 
 
 ## Usage
@@ -37,17 +39,18 @@ This library is similar to [lockfile](https://github.com/isaacs/lockfile) but th
 
 Tries to acquire a lock on `file`.
 
-If the lock succeeds, an `unlock` function is provided that should be called when you want to release the lock.   
-If the lock gets compromised, the `compromised` function will be called. The default `compromised` function is a simple `throw err`, which will probably the process to die.
+If the lock succeeds, a `release` function is provided that should be called when you want to release the lock.   
+If the lock gets compromised, the `compromised` function will be called. The default `compromised` function is a simple `throw err` which will probably cause the process to die. Specify it to handle the way you desire.
 
 Available options:
 
 - `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (minimum value is `5000`)
-- `update`: The interval in milliseconds in which the lockfile's mtime will be updated, defaults to `stale/2` (minimum value is `1000`, maximum value is `stale/2`)
+- `update`: The interval in milliseconds in which the lockfile's `mtime` will be updated, defaults to `stale/2` (minimum value is `1000`, maximum value is `stale/2`)
 - `retries`: The number of retries or a [retry](https://www.npmjs.org/package/retry) options object, defaults to `0`
 - `resolve`: Resolve to a canonical path to handle relative paths & symlinks properly, defaults to `true`
 - `fs`: A custom fs to use, defaults to `graceful-fs`
 
+NOTE: It's important that calls to `lock()` have the same `stale` and `update` values for the same file.
 
 ```js
 var lockfile = require('proper-lockfile');
@@ -73,11 +76,11 @@ lockfile.lock('some/file', function (err, release) {
 
 ### .unlock(file, [options], [callback])
 
-Releases a lock previously acquired over `file`.
+Releases a previously acquired lock on `file`.
 
-Whenever possible you should use the `release` function to release the lock. Still there are cases in which its hard to keep a reference to it around code. In those cases `.unlock()` might be handy but you should ONLY use it if you are sure you own the lock. The main difference is that `release()` is contextualized with the lock id generated with `lock()` while `.unlock()` is contextualized with the `file`. Having this said, it's a bit safer to use `release()`.
+Whenever possible you should use the `release` function instead (as exemplified above). Still there are cases in which its hard to keep a reference to it around code. In those cases `unlock()` might be handy but you should ONLY use it if you are sure you own the lock. The main difference is that `release()` is contextualized with the lock id generated with `lock()` while `unlock()` is contextualized with the `file`. Having this said, it's a bit safer to use `release()`.
 
-The `callback` is optional because even if the removal of the lock failed, the lockfile's mtime will no longer be updated causing it to eventually stale.
+The `callback` is optional because even if the removal of the lock failed, the lockfile's `mtime` will no longer be updated causing it to eventually stale.
 
 
 Available options:
@@ -93,10 +96,10 @@ lockfile.lock('some/file', function (err) {
     if (err) throw err;
 
     // Later..
-    lockfile.remove('some/file');
+    lockfile.unlock('some/file');
 
     // or..
-    /*lockfile.remove('some/file', function (err) {
+    /*lockfile.unlock('some/file', function (err) {
         // At this point the lock was effectively released or an error
         // ocurred while removing it
         if (err) throw err;
