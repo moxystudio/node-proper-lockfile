@@ -262,7 +262,7 @@ function unlock(file, options, callback) {
 
         lock.updateTimeout && clearTimeout(lock.updateTimeout);  // Cancel lock mtime update
         lock.released = true;                                    // Signal the lock has been released
-        delete locks[file];                                   // Delete from acquired
+        delete locks[file];                                      // Delete from locks
 
         removeLock(file, options, callback);
     });
