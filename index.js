@@ -116,14 +116,14 @@ function updateLock(file, options) {
 
             // Verify if we are within the stale threshold
             if (lock.lastUpdate <= Date.now() - options.stale) {
-                return compromisedLock(file, lock, lock.updateError || 'Unable to update lock within the stale threshold');
+                return compromisedLock(file, lock, errcode(lock.updateError || 'Unable to update lock within the stale threshold', 'ECOMPROMISED'));
             }
 
             // If it failed to update the lockfile, keep trying unless
             // the lockfile/uidfile was deleted!
             if (err) {
                 if (err.code === 'ENOENT') {
-                    return compromisedLock(file, lock, err);
+                    return compromisedLock(file, lock, errcode(err, 'ECOMPROMISED'));
                 }
 
                 lock.updateError = err;
@@ -133,7 +133,7 @@ function updateLock(file, options) {
 
             // Verify lock uid
             if (result.read.toString().trim() !== lock.uid) {
-                return compromisedLock(file, lock, 'Lock uid mismatch');
+                return compromisedLock(file, lock, errcode('Lock uid mismatch', 'ECOMPROMISED'));
             }
 
             // All ok, keep updating..
@@ -146,13 +146,14 @@ function updateLock(file, options) {
 }
 
 function compromisedLock(file, lock, err) {
-    lock.released = true;
+    lock.released = true;                                    // Signal the lock has been released
+    lock.updateTimeout && clearTimeout(lock.updateTimeout);  // Cancel lock mtime update
 
     if (locks[file] === lock) {
         delete locks[file];
     }
 
-    lock.compromised(errcode(err, 'ECOMPROMISED'));
+    lock.compromised(err);
 }
 
 // -----------------------------------------
