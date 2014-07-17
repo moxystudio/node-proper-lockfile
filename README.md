@@ -17,7 +17,17 @@ The lockfile path is based on the file path you are trying to lock by suffixing 
 
 When a lock is successfully acquired, the lockfile's `mtime` (modified time) is periodically updated to prevent staleness. This allows to effectively check if a lock is stale by checking its `mtime` against a stale threshold. If the update of the mtime fails several times, the lock might be compromised.
 
-Additionally a unique id is generated for each lock which is then stored on a file that lives inside the lockfile. This unique id is compared each time the lockfile's `mtime` is updated. This improves the compromised check because it detects cases in which two locks are acquired over the same file. This is rare, but can happen if someone manually deletes the lockfile within the update delay of the current owner.
+Additionally a unique id is generated for each lock which is then stored on a file that lives inside the lockfile. This unique id is compared each time the lockfile's `mtime` is updated, improving compromised check robustness.
+
+
+### When can a lock be compromised?
+
+1. When the `lockfile` is manually deleted and the update of the lock `mtime` then fails with ENOENT
+2. When the `lockfile` is manually deleted and someone else acquires the lock within the update period
+3. When different `stale` and/or `update` configurations are being used for the same file
+4. When the update of the `lockfile` took longer than the `stale` threshold
+
+As you can see, all these points are originated from human intervention, except point `4` which is unlikely to happen unless you block the event loop for high periods of times or the `fs` calls are really slow.
 
 
 ### Comparison
@@ -31,16 +41,6 @@ This library is similar to [lockfile](https://github.com/isaacs/lockfile) but th
 - The lockfile staleness check is done via `ctime` (creation time) which is unsuitable for long running processes. `proper-lockfile` constantly updates lockfiles `mtime` to do proper staleness check.
 
 - It does not check if the lockfile was compromised which can led to undesirable situations. `proper-lockfile` checks the lockfile when updating the `mtime`.
-
-
-### When can a lock be compromised?
-
-1. When the `lockfile` is manually deleted and the update of the lock `mtime` then fails with ENOENT
-2. When the `lockfile` is manually deleted and someone else acquires the lock within the update period
-3. When different `stale` and/or `update` configurations are being used for the same file
-4. When the update of the `lockfile` took longer than the `stale` threshold
-
-As you can see, all these points are originated from human intervention, except point `4` which is unlikely to happen unless you block the event loop for high periods of times or the `fs` calls are really slow.
 
 
 ## Usage
