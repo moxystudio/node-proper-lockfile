@@ -14,7 +14,6 @@ var lockfileContents = fs.readFileSync(__dirname + '/../index.js').toString();
 var tmpFileRealPath = path.join(__dirname, 'tmp');
 var tmpFile = path.relative(process.cwd(), tmpFileRealPath);
 var tmpFileLock = tmpFileRealPath + '.lock';
-var tmpFileLockUid = path.join(tmpFileLock, '.uid');
 var tmpFileSymlinkRealPath = tmpFileRealPath + '_symlink';
 var tmpFileSymlink = tmpFile + '_symlink';
 var tmpFileSymlinkLock = tmpFile + '.lock';
@@ -81,15 +80,6 @@ describe('.lock()', function () {
         lockfile.lock(tmpFile, function (err) {
             expect(err).to.not.be.ok();
             expect(fs.existsSync(tmpFileLock)).to.be(true);
-
-            next();
-        });
-    });
-
-    it('should create the uidfile', function (next) {
-        lockfile.lock(tmpFile, function (err) {
-            expect(err).to.not.be.ok();
-            expect(fs.existsSync(tmpFileLockUid)).to.be(true);
 
             next();
         });
@@ -250,29 +240,6 @@ describe('.lock()', function () {
         });
     });
 
-    it('should fail if writing the uidfile errors out', function (next) {
-        var customFs = extend({}, fs);
-
-        customFs.writeFile = function (path, contents, options, callback) {
-            if (typeof options === 'function') {
-                callback = options;
-                options = {};
-            }
-
-            callback(new Error('foo'));
-        };
-
-        lockfile.lock(tmpFile, { fs: customFs }, function (err) {
-            expect(err).to.be.an(Error);
-            expect(err.message).to.be('foo');
-
-            expect(fs.existsSync(tmpFileLock)).to.be(false);
-            expect(fs.existsSync(tmpFileLockUid)).to.be(false);
-
-            next();
-        });
-    });
-
     it('should update the lockfile mtime automatically', function (next) {
         lockfile.lock(tmpFile, { update: 1000 }, function (err) {
             var mtime;
@@ -424,29 +391,6 @@ describe('.lock()', function () {
                     expect(err).to.not.be.ok();
                 });
             }, 5500);
-        });
-    });
-
-    it('should call the compromised function if the lock uid mismatches', function (next) {
-        this.timeout(10000);
-
-        lockfile.lock(tmpFile, { update: 3000 }, function (err) {
-            expect(err).to.be.an(Error);
-            expect(err.code).to.be('ECOMPROMISED');
-            expect(err.message).to.contain('mismatch');
-            expect(fs.existsSync(tmpFileLock)).to.be(true);
-
-            next();
-        }, function (err) {
-            expect(err).to.not.be.ok();
-
-            setTimeout(function () {
-                cp.exec('node ' + __dirname + '/fixtures/force.js', function (err) {
-                    if (err) {
-                        return next(err);
-                    }
-                });
-            }, 1500);
         });
     });
 
@@ -615,25 +559,6 @@ describe('.unlock()', function () {
         });
     });
 
-    it('should fail if removing the uidfile errors out', function (next) {
-        var customFs = extend({}, fs);
-
-        customFs.unlink = function (path, callback) {
-            callback(new Error('foo'));
-        };
-
-        lockfile.lock(tmpFile, function (err) {
-            expect(err).to.not.be.ok();
-
-            lockfile.unlock(tmpFile, { fs: customFs }, function (err) {
-                expect(err).to.be.an(Error);
-                expect(err.message).to.be('foo');
-
-                next();
-            });
-        });
-    });
-
     it('should ignore ENOENT errors when removing the lockfile', function (next) {
         var customFs = extend({}, fs);
         var called;
@@ -642,28 +567,6 @@ describe('.unlock()', function () {
             called = true;
             rimraf.sync(path);
             fs.rmdir(path, callback);
-        };
-
-        lockfile.lock(tmpFile, function (err) {
-            expect(err).to.not.be.ok();
-
-            lockfile.unlock(tmpFile, { fs: customFs }, function (err) {
-                expect(err).to.not.be.ok();
-                expect(called).to.be(true);
-
-                next();
-            });
-        });
-    });
-
-    it('should ignore ENOENT errors when removing the uidfile', function (next) {
-        var customFs = extend({}, fs);
-        var called;
-
-        customFs.unlink = function (path, callback) {
-            called = true;
-            rimraf.sync(path);
-            fs.unlink(path, callback);
         };
 
         lockfile.lock(tmpFile, function (err) {

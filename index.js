@@ -5,17 +5,11 @@ var path = require('path');
 var extend = require('extend');
 var errcode = require('err-code');
 var retry = require('retry');
-var async = require('async');
-var uuid = require('uuid');
 
 var locks = {};
 
 function getLockFile(file) {
     return file + '.lock';
-}
-
-function getUidFile(file) {
-    return path.join(getLockFile(file), '.uid');
 }
 
 function canonicalPath(file, options, callback) {
@@ -29,20 +23,9 @@ function canonicalPath(file, options, callback) {
 function acquireLock(file, options, callback) {
     // Use mkdir to create the lockfile (atomic operation)
     options.fs.mkdir(getLockFile(file), function (err) {
-        var uid;
-
-        // If we successfuly created the lockfile, write the uidfile and we are done
+        // If successfuly, we are done
         if (!err) {
-            uid = uuid.v4();
-            return options.fs.writeFile(getUidFile(file), uid, function (err) {
-                if (err) {
-                    return removeLock(file, options, function () {
-                        callback(err);
-                    });
-                }
-
-                return callback(null, uid);
-            });
+            return callback();
         }
 
         // Otherwise, check if lock is stale by analyzing the file mtime
@@ -79,20 +62,13 @@ function acquireLock(file, options, callback) {
 }
 
 function removeLock(file, options, callback) {
-    // Remove uidfile, ignoring ENOENT errors
-    options.fs.unlink(getUidFile(file), function (err) {
+    // Remove lockfile, ignoring ENOENT errors
+    options.fs.rmdir(getLockFile(file), function (err) {
         if (err && err.code !== 'ENOENT') {
             return callback(err);
         }
 
-        // Remove lockfile, ignoring ENOENT errors
-        options.fs.rmdir(getLockFile(file), function (err) {
-            if (err && err.code !== 'ENOENT') {
-                return callback(err);
-            }
-
-            callback();
-        });
+        callback();
     });
 }
 
@@ -105,10 +81,7 @@ function updateLock(file, options) {
 
         lock.updateTimeout = null;
 
-        async.parallel({
-            read: options.fs.readFile.bind(options.fs, getUidFile(file)),
-            utimes: options.fs.utimes.bind(options.fs, getLockFile(file), mtime, mtime),
-        }, function (err, result) {
+        options.fs.utimes(getLockFile(file), mtime, mtime, function (err) {
             // Ignore if the lock was released
             if (lock.released) {
                 return;
@@ -120,7 +93,7 @@ function updateLock(file, options) {
             }
 
             // If it failed to update the lockfile, keep trying unless
-            // the lockfile/uidfile was deleted!
+            // the lockfile was deleted!
             if (err) {
                 if (err.code === 'ENOENT') {
                     return compromisedLock(file, lock, errcode(err, 'ECOMPROMISED'));
@@ -129,11 +102,6 @@ function updateLock(file, options) {
                 lock.updateError = err;
                 lock.updateDelay = 1000;
                 return updateLock(file, options);
-            }
-
-            // Verify lock uid
-            if (result.read.toString().trim() !== lock.uid) {
-                return compromisedLock(file, lock, errcode('Lock uid mismatch', 'ECOMPROMISED'));
             }
 
             // All ok, keep updating..
@@ -147,6 +115,7 @@ function updateLock(file, options) {
 
 function compromisedLock(file, lock, err) {
     lock.released = true;                                    // Signal the lock has been released
+    /* istanbul ignore next */
     lock.updateTimeout && clearTimeout(lock.updateTimeout);  // Cancel lock mtime update
 
     if (locks[file] === lock) {
@@ -196,7 +165,7 @@ function lock(file, options, compromised, callback) {
         // Attempt to acquire the lock
         operation = retry.operation(options.retries);
         operation.attempt(function () {
-            acquireLock(file, options, function (err, uid) {
+            acquireLock(file, options, function (err) {
                 var lock;
 
                 if (operation.retry(err)) {
@@ -209,7 +178,6 @@ function lock(file, options, compromised, callback) {
 
                 // We now own the lock
                 locks[file] = lock = {
-                    uid: uid,
                     options: options,
                     compromised: compromised,
                     lastUpdate: Date.now()
@@ -270,10 +238,7 @@ function unlock(file, options, callback) {
 /* istanbul ignore next */
 process.on('exit', function () {
     Object.keys(locks).forEach(function (file) {
-        try {
-            locks[file].options.fs.unlinkSync.sync(getUidFile(file));
-            locks[file].options.fs.rmdirSync.sync(getLockFile(file));
-        } catch (e) {}
+        try { locks[file].options.fs.rmdirSync.sync(getLockFile(file)); } catch (e) {}
     });
 });
 

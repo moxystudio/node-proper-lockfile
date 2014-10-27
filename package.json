@@ -21,6 +21,7 @@
     "locking",
     "file",
     "lockfile",
+    "fs",
     "rename",
     "cross",
     "machine"
@@ -28,14 +29,13 @@
   "author": "IndigoUnited <hello@indigounited.com> (http://indigounited.com)",
   "license": "MIT",
   "dependencies": {
-    "async": "^0.9.0",
     "err-code": "^0.1.0",
     "extend": "^1.3.0",
     "graceful-fs": "^3.0.2",
-    "retry": "^0.6.1",
-    "uuid": "^1.4.1"
+    "retry": "^0.6.1"
   },
   "devDependencies": {
+    "async": "^0.9.0",
     "buffered-spawn": "^0.2.2",
     "expect.js": "^0.3.1",
     "istanbul": "^0.3.0",
