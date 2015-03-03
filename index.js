@@ -13,10 +13,12 @@ function getLockFile(file) {
 }
 
 function canonicalPath(file, options, callback) {
-    if (!options.resolve) {
-        return callback(null, path.normalize(file));
+    if (!options.realpath) {
+        return callback(null, path.resolve(file));
     }
 
+    // Use realpath to resolve symlinks
+    // It also resolves relative paths
     options.fs.realpath(file, callback);
 }
 
@@ -26,6 +28,11 @@ function acquireLock(file, options, callback) {
         // If successfuly, we are done
         if (!err) {
             return callback();
+        }
+
+        // If error is not EEXIST than some other error occurred while locking
+        if (err.code !== 'EEXIST') {
+            return callback(err);
         }
 
         // Otherwise, check if lock is stale by analyzing the file mtime
@@ -142,7 +149,7 @@ function lock(file, options, compromised, callback) {
     options = extend({
         stale: 10000,
         update: null,
-        resolve: true,
+        realpath: true,
         retries: 0,
         fs: fs
     }, options);
@@ -191,8 +198,8 @@ function lock(file, options, compromised, callback) {
                         return releasedCallback && releasedCallback(errcode('Lock is already released', 'ERELEASED'));
                     }
 
-                    // Not necessary to resolve twice when unlocking
-                    unlock(file, extend({}, options, { resolve: false }), releasedCallback);
+                    // Not necessary to use realpath twice when unlocking
+                    unlock(file, extend({}, options, { realpath: false }), releasedCallback);
                 });
             });
         });
@@ -207,7 +214,7 @@ function unlock(file, options, callback) {
 
     options = extend({
         fs: fs,
-        resolve: true
+        realpath: true
     }, options);
 
     callback = callback || function () {};

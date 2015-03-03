@@ -61,7 +61,7 @@ Available options:
 - `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (minimum value is `5000`)
 - `update`: The interval in milliseconds in which the lockfile's `mtime` will be updated, defaults to `stale/2` (minimum value is `1000`, maximum value is `stale/2`)
 - `retries`: The number of retries or a [retry](https://www.npmjs.org/package/retry) options object, defaults to `0`
-- `resolve`: Resolve to a canonical path to handle relative paths & symlinks properly, defaults to `true`
+- `realpath`: Resolve symlinks using realpath, defaults to `true` (note that if `true`, the `file` must exist previously)
 - `fs`: A custom fs to use, defaults to `graceful-fs`
 
 
@@ -98,7 +98,7 @@ The `callback` is optional because even if the removal of the lock failed, the l
 
 Available options:
 
-- `resolve`: Resolve to a canonical path to handle relative paths & symlinks properly, defaults to `true`
+- `realpath`: Resolve symlinks using realpath, defaults to `true` (note that if `true`, the `file` must exist previously)
 - `fs`: A custom fs to use, defaults to `graceful-fs`
 
 

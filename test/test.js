@@ -17,27 +17,26 @@ var tmpFileLock = tmpFileRealPath + '.lock';
 var tmpFileSymlinkRealPath = tmpFileRealPath + '_symlink';
 var tmpFileSymlink = tmpFile + '_symlink';
 var tmpFileSymlinkLock = tmpFile + '.lock';
+var tmpNonExistentFile = path.join(__dirname, 'nonexistentfile');
 
 function clearLocks(callback) {
     var toUnlock = [];
 
-    if (fs.existsSync(tmpFile)) {
-        toUnlock.push(function (callback) {
-            lockfile.unlock(tmpFile, function (err) {
-                callback(!err || err.code === 'ENOTACQUIRED' ? null : err);
-            });
+    toUnlock.push(function (callback) {
+        lockfile.unlock(tmpFile, { realpath: false }, function (err) {
+            callback(!err || err.code === 'ENOTACQUIRED' ? null : err);
         });
+    });
 
-        toUnlock.push(function (callback) {
-            lockfile.unlock(tmpFile, { resolve: false }, function (err) {
-                callback(!err || err.code === 'ENOTACQUIRED' ? null : err);
-            });
+    toUnlock.push(function (callback) {
+        lockfile.unlock(tmpNonExistentFile, { realpath: false }, function (err) {
+            callback(!err || err.code === 'ENOTACQUIRED' ? null : err);
         });
-    }
+    });
 
     if (fs.existsSync(tmpFileSymlink)) {
         toUnlock.push(function (callback) {
-            lockfile.unlock(tmpFileSymlink, { resolve: false }, function (err) {
+            lockfile.unlock(tmpFileSymlink, function (err) {
                 callback(!err || err.code === 'ENOTACQUIRED' ? null : err);
             });
         });
@@ -67,10 +66,18 @@ describe('.lock()', function () {
 
     this.timeout(5000);
 
-    it('should fail if the file does not exist', function (next) {
-        lockfile.lock('filethatwillneverexist', function (err) {
+    it('should fail if the file does not exist by default', function (next) {
+        lockfile.lock(tmpNonExistentFile, function (err) {
             expect(err).to.be.an(Error);
             expect(err.code).to.be('ENOENT');
+
+            next();
+        });
+    });
+
+    it('should not fail if the file does not exist and realpath is false', function (next) {
+        lockfile.lock(tmpNonExistentFile, { realpath: false }, function (err) {
+            expect(err).to.not.be.ok();
 
             next();
         });
@@ -131,7 +138,7 @@ describe('.lock()', function () {
         });
     });
 
-    it('should resolve to a canonical path', function (next) {
+    it('should resolve symlinks by default', function (next) {
         // Create a symlink to the tmp file
         fs.symlinkSync(tmpFileRealPath, tmpFileSymlinkRealPath);
 
@@ -142,22 +149,27 @@ describe('.lock()', function () {
                 expect(err).to.be.an(Error);
                 expect(err.code).to.be('ELOCKED');
 
-                next();
+                lockfile.lock(tmpFile + '/../../test/tmp', function (err) {
+                    expect(err).to.be.an(Error);
+                    expect(err.code).to.be('ELOCKED');
+
+                    next();
+                });
             });
         });
     });
 
-    it('should only normalize the path if resolve is false', function (next) {
+    it('should not resolve symlinks if realpath is false', function (next) {
         // Create a symlink to the tmp file
         fs.symlinkSync(tmpFileRealPath, tmpFileSymlinkRealPath);
 
-        lockfile.lock(tmpFileSymlink, { resolve: false }, function (err) {
+        lockfile.lock(tmpFileSymlink, { realpath: false }, function (err) {
             expect(err).to.not.be.ok();
 
-            lockfile.lock(tmpFile, { resolve: false }, function (err) {
+            lockfile.lock(tmpFile, { realpath: false }, function (err) {
                 expect(err).to.not.be.ok();
 
-                lockfile.lock(tmpFile + '/../test/tmp', { resolve: false }, function (err) {
+                lockfile.lock(tmpFile + '/../../test/tmp', { realpath: false }, function (err) {
                     expect(err).to.be.an(Error);
                     expect(err.code).to.be('ELOCKED');
 
