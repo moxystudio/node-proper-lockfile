@@ -89,6 +89,15 @@ describe('.lock()', function () {
         });
     });
 
+    it('should fail if impossible to create the lockfile', function (next) {
+        lockfile.lock('nonexistentdir/nonexistentfile', { realpath: false }, function (err) {
+            expect(err).to.be.an(Error);
+            expect(err.code).to.be('ENOENT');
+
+            next();
+        });
+    });
+
     it('should create the lockfile', function (next) {
         lockfile.lock(tmpFile, function (err) {
             expect(err).to.not.be.ok();
