@@ -16,7 +16,7 @@ var tmpFile = path.relative(process.cwd(), tmpFileRealPath);
 var tmpFileLock = tmpFileRealPath + '.lock';
 var tmpFileSymlinkRealPath = tmpFileRealPath + '_symlink';
 var tmpFileSymlink = tmpFile + '_symlink';
-var tmpFileSymlinkLock = tmpFile + '.lock';
+var tmpFileSymlinkLock = tmpFileSymlinkRealPath + '.lock';
 var tmpNonExistentFile = path.join(__dirname, 'nonexistentfile');
 
 function clearLocks(callback) {
@@ -30,6 +30,12 @@ function clearLocks(callback) {
 
     toUnlock.push(function (callback) {
         lockfile.unlock(tmpNonExistentFile, { realpath: false }, function (err) {
+            callback(!err || err.code === 'ENOTACQUIRED' ? null : err);
+        });
+    });
+
+    toUnlock.push(function (callback) {
+        lockfile.unlock(tmpFileSymlink, { realpath: false }, function (err) {
             callback(!err || err.code === 'ENOTACQUIRED' ? null : err);
         });
     });
@@ -760,8 +766,6 @@ describe('misc', function () {
 
         spawn('node', [__dirname + '/fixtures/stress.js'], function (err, stdout) {
             if (err) {
-                stdout += 'Exit code #' + err.status;
-
                 if (process.env.TRAVIS) {
                     process.stdout.write(stdout);
                 } else {
