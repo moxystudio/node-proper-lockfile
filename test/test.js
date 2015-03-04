@@ -229,6 +229,30 @@ describe('.lock()', function () {
         });
     });
 
+    it('should retry if the lockfile was removed when verifying staleness (not recursively)', function (next) {
+        var mtime = (Date.now() - 60000) / 1000;
+        var customFs = extend({}, fs);
+
+        customFs.stat = function (path, callback) {
+            var err;
+
+            err = new Error();
+            err.code = 'ENOENT';
+
+            return callback(err);
+        };
+
+        fs.mkdirSync(tmpFileLock);
+        fs.utimesSync(tmpFileLock, mtime, mtime);
+
+        lockfile.lock(tmpFile, { fs: customFs }, function (err) {
+            expect(err).to.be.an(Error);
+            expect(err.code).to.be('ELOCKED');
+
+            next();
+        });
+    });
+
     it('should fail if stating the lockfile errors out when verifying staleness', function (next) {
         var mtime = (Date.now() - 60000) / 1000;
         var customFs = extend({}, fs);

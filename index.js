@@ -30,7 +30,7 @@ function acquireLock(file, options, callback) {
             return callback();
         }
 
-        // If error is not EEXIST than some other error occurred while locking
+        // If error is not EEXIST then some other error occurred while locking
         if (err.code !== 'EEXIST') {
             return callback(err);
         }
