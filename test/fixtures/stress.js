@@ -35,6 +35,8 @@ function master() {
     });
 
     setTimeout(function () {
+        cluster.removeAllListeners('exit');
+
         Object.keys(cluster.workers).forEach(function (id) {
             cluster.workers[id].removeAllListeners('message').kill();
         });
