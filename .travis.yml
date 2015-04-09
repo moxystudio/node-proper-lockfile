@@ -1,6 +1,7 @@
 language: node_js
 node_js:
   - '0.10'
+  - '0.12'
 env:
   - TRAVIS=1
 script: "npm run test-travis"
