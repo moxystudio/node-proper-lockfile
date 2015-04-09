@@ -118,6 +118,10 @@ function updateLock(file, options) {
             updateLock(file, options);
         });
     }, lock.updateDelay);
+
+    // Unref the timer so that the nodejs process can exit freely
+    // This is safe because all acquired locks will be automatically released
+    // on process exit
     lock.updateTimeout.unref();
 }
 

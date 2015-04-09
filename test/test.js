@@ -795,6 +795,10 @@ describe('misc', function () {
         });
     });
 
+    it('should not hold the process if it has no more work to do', function (next) {
+        spawn('node', [__dirname + '/fixtures/unref.js'], next);
+    });
+
     it('should work on stress conditions', function (next) {
         this.timeout(80000);
 
