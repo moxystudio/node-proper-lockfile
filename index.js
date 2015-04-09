@@ -5,6 +5,7 @@ var path = require('path');
 var extend = require('extend');
 var errcode = require('err-code');
 var retry = require('retry');
+var syncFs = require('./lib/syncFs');
 
 var locks = {};
 
@@ -246,6 +247,41 @@ function unlock(file, options, callback) {
     });
 }
 
+function lockSync(file, options, compromised) {
+    var err,
+        release;
+
+    options = options || {};
+    options.fs = syncFs(options.fs || fs);
+
+    lock(file, options, compromised, function (_err, _release) {
+        err = _err;
+        release = _release;
+    });
+
+    if (err) {
+        throw err;
+    }
+
+    return release;
+}
+
+function unlockSync(file, options) {
+    var err;
+
+    options = options || {};
+    options.fs = syncFs(options.fs || fs);
+
+    unlock(file, options, function (_err) {
+        err = _err;
+    });
+
+    if (err) {
+        throw err;
+    }
+}
+
+
 // Remove acquired locks on exit
 /* istanbul ignore next */
 process.on('exit', function () {
@@ -257,3 +293,5 @@ process.on('exit', function () {
 module.exports = lock;
 module.exports.lock = lock;
 module.exports.unlock = unlock;
+module.exports.lockSync = lockSync;
+module.exports.unlockSync = unlockSync;

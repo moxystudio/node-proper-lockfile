@@ -576,7 +576,6 @@ describe('.unlock()', function () {
         });
     });
 
-
     it('should remove the lockfile', function (next) {
         lockfile.lock(tmpFile, function (err) {
             expect(err).to.not.be.ok();
@@ -768,6 +767,73 @@ describe('release()', function () {
                 });
             });
         });
+    });
+});
+
+describe('sync api', function () {
+    beforeEach(function () {
+        fs.writeFileSync(tmpFile, '');
+        rimraf.sync(tmpFileSymlink);
+    });
+
+    afterEach(clearLocks);
+
+    it('should expose a working lockSync', function () {
+        var release;
+
+        // Test success
+        release = lockfile.lockSync(tmpFile);
+
+        expect(release).to.be.a('function');
+        expect(fs.existsSync(tmpFileLock)).to.be(true);
+
+        release();
+        expect(fs.existsSync(tmpFileLock)).to.be(false);
+
+        // Test fail
+        lockfile.lockSync(tmpFile);
+        expect(function () {
+            lockfile.lockSync(tmpFile);
+        }).to.throwException(/already being hold/);
+    });
+
+    it('should expose a working unlockSync', function () {
+        // Test success
+        lockfile.lockSync(tmpFile);
+        expect(fs.existsSync(tmpFileLock)).to.be(true);
+
+        lockfile.unlockSync(tmpFile);
+        expect(fs.existsSync(tmpFileLock)).to.be(false);
+
+        // Test fail
+        expect(function () {
+            lockfile.unlockSync(tmpFile);
+        }).to.throwException(/not acquired\/owned by you/);
+    });
+
+    it('should update the lockfile mtime automatically', function (next) {
+        var mtime;
+
+        this.timeout(5000);
+
+        lockfile.lockSync(tmpFile, { update: 1000 });
+        mtime = fs.statSync(tmpFileLock).mtime;
+
+        // First update occurs at 1000ms
+        setTimeout(function () {
+            var stat = fs.statSync(tmpFileLock);
+            expect(stat.mtime.getTime()).to.be.greaterThan(mtime.getTime());
+            mtime = stat.mtime;
+        }, 1500);
+
+        // Second update occurs at 2000ms
+        setTimeout(function () {
+            var stat = fs.statSync(tmpFileLock);
+            expect(stat.mtime.getTime()).to.be.greaterThan(mtime.getTime());
+            mtime = stat.mtime;
+
+            next();
+        }, 2500);
     });
 });
 
