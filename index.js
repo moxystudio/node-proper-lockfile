@@ -118,6 +118,7 @@ function updateLock(file, options) {
             updateLock(file, options);
         });
     }, lock.updateDelay);
+    lock.updateTimeout.unref();
 }
 
 function compromisedLock(file, lock, err) {
