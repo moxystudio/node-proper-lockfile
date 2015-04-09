@@ -3,9 +3,11 @@
 var fs = require('fs');
 var lockfile = require('../../');
 
-fs.rmdirSync(__dirname + '/../tmp.lock');
+var file = __dirname + '/../tmp';
 
-lockfile.lock(__dirname + '/../tmp', function (err) {
+fs.writeFileSync(file, '');
+
+lockfile.lock(file, function (err) {
     if (err) {
         process.exit(25);
     }

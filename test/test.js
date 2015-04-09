@@ -779,15 +779,16 @@ describe('misc', function () {
     });
 
     it('should remove open locks if the process crashes', function (next) {
-        cp.exec('node ' + __dirname + '/fixtures/crash.js', function (err) {
+        cp.exec('node ' + __dirname + '/fixtures/crash.js', function (err, stdout, stderr) {
             if (!err) {
                 return next(new Error('Should have failed'));
             }
 
             if (err.code === 25) {
-               return next(new Error('Lock failed'));
+                return next(new Error('Lock failed'));
             }
 
+            expect(stderr).to.contain('crash');
             expect(fs.existsSync(tmpFileLock)).to.be(false);
 
             next();

@@ -246,7 +246,7 @@ function unlock(file, options, callback) {
 /* istanbul ignore next */
 process.on('exit', function () {
     Object.keys(locks).forEach(function (file) {
-        try { locks[file].options.fs.rmdirSync.sync(getLockFile(file)); } catch (e) {}
+        try { locks[file].options.fs.rmdirSync(getLockFile(file)); } catch (e) {}
     });
 });
 
