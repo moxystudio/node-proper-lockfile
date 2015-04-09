@@ -251,6 +251,11 @@ function lockSync(file, options, compromised) {
     var err,
         release;
 
+    if (typeof options === 'function') {
+        compromised = options;
+        options = null;
+    }
+
     options = options || {};
     options.fs = syncFs(options.fs || fs);
 

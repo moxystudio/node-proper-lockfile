@@ -786,7 +786,24 @@ describe('sync api', function () {
 
         expect(release).to.be.a('function');
         expect(fs.existsSync(tmpFileLock)).to.be(true);
+        release();
+        expect(fs.existsSync(tmpFileLock)).to.be(false);
 
+        // Test compromise being passed and no options
+        release = lockfile.lockSync(tmpFile, function () {});
+        expect(fs.existsSync(tmpFileLock)).to.be(true);
+        release();
+        expect(fs.existsSync(tmpFileLock)).to.be(false);
+
+        // Test options being passed and no compromised
+        release = lockfile.lockSync(tmpFile, {});
+        expect(fs.existsSync(tmpFileLock)).to.be(true);
+        release();
+        expect(fs.existsSync(tmpFileLock)).to.be(false);
+
+        // Test both options and compromised being passed
+        release = lockfile.lockSync(tmpFile, {}, function () {});
+        expect(fs.existsSync(tmpFileLock)).to.be(true);
         release();
         expect(fs.existsSync(tmpFileLock)).to.be(false);
 
@@ -834,6 +851,19 @@ describe('sync api', function () {
 
             next();
         }, 2500);
+    });
+
+    it('should use a custom fs', function () {
+        var customFs = extend({}, fs),
+            called;
+
+        customFs.realpathSync = function () {
+            called = true;
+            return fs.realpathSync.apply(fs, arguments);
+        };
+
+        lockfile.lockSync(tmpFile, { fs: customFs });
+        expect(called).to.be(true);
     });
 });
 
