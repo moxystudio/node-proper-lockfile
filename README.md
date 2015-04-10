@@ -87,12 +87,6 @@ lockfile.lock('some/file', function (err, release) {
 ```
 
 
-### .lockSync(file, [options], [compromised])
-
-Sync version of `.lock()`.   
-Returns the `release` function or throws on err;
-
-
 ### .unlock(file, [options], [callback])
 
 Releases a previously acquired lock on `file`.
@@ -125,6 +119,12 @@ lockfile.lock('some/file', function (err) {
     });*/
 });
 ```
+
+
+### .lockSync(file, [options], [compromised])
+
+Sync version of `.lock()`.   
+Returns the `release` function or throws on err;
 
 
 ### .unlockSync(file, [options])
