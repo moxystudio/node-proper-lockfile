@@ -124,13 +124,13 @@ lockfile.lock('some/file', function (err) {
 ### .lockSync(file, [options], [compromised])
 
 Sync version of `.lock()`.   
-Returns the `release` function or throws on err;
+Returns the `release` function or throws on err.
 
 
 ### .unlockSync(file, [options])
 
 Sync version of `.unlock()`.   
-Throws on err;
+Throws on err.
 
 
 ## Tests
