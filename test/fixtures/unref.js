@@ -7,4 +7,8 @@ var file = __dirname + '/../tmp';
 
 fs.writeFileSync(file, '');
 
-lockfile.lock(file, function () {});
+lockfile.lock(file, function (err) {
+    if (err) {
+        throw err;
+    }
+});
