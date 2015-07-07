@@ -9,6 +9,12 @@ var lockfile = require('../../');
 
 var file = __dirname + '/../tmp';
 
+function printExcerpt(logs, index) {
+    logs.slice(Math.max(0, index - 50), index + 50).forEach(function (log, index) {
+        process.stdout.write((index + 1) + ' ' + log.timestamp + ' ' + log.message + '\n');
+    });
+}
+
 function master() {
     var logs = [],
         numCPUs = os.cpus().length,
@@ -63,17 +69,14 @@ function master() {
                 }
             });
 
-            // Print logs
-            logs.forEach(function (log, index) {
-                process.stdout.write((index + 1) + ' ' + log.timestamp + ' ' + log.message + '\n');
-            });
-
             // Validate logs
             logs.forEach(function (log, index) {
                 switch (log.message) {
                 case 'LOCK_ACQUIRED':
                     if (acquired) {
                         process.stdout.write('\nInconsistent at line ' + (index + 1) + '\n');
+                        printExcerpt(logs, index);
+
                         process.exit(1);
                     }
 
@@ -82,6 +85,7 @@ function master() {
                 case 'LOCK_RELEASED':
                     if (!acquired) {
                         process.stdout.write('\nInconsistent at line ' + (index + 1) + '\n');
+                        printExcerpt(logs, index);
                         process.exit(1);
                     }
 
