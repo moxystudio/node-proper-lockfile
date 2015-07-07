@@ -26,7 +26,7 @@ function canonicalPath(file, options, callback) {
 function acquireLock(file, options, callback) {
     // Use mkdir to create the lockfile (atomic operation)
     options.fs.mkdir(getLockFile(file), function (err) {
-        // If successfuly, we are done
+        // If successful, we are done
         if (!err) {
             return callback();
         }
@@ -82,6 +82,11 @@ function removeLock(file, options, callback) {
 
 function updateLock(file, options) {
     var lock = locks[file];
+
+    /* istanbul ignore next */
+    if (lock.updateTimeout) {
+        return;
+    }
 
     lock.updateDelay = lock.updateDelay || options.update;
     lock.updateTimeout = setTimeout(function () {
