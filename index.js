@@ -102,8 +102,13 @@ function updateLock(file, options) {
 
             // Verify if we are within the stale threshold
             if (lock.lastUpdate <= Date.now() - options.stale) {
-                return compromisedLock(file, lock, errcode(lock.updateError || 'Unable to update lock within the stale threshold', 'ECOMPROMISED'));
+             && lock.lastUpdate > Date.now() - options.stale * 2) {
+                return compromisedLock(file, lock, 
+                    errcode(lock.updateError || 'Unable to update lock within the stale threshold', 'ECOMPROMISED'));
             }
+
+            // If the file is older than (stale * 2), we assume the clock is moved manually,
+            // which we consider a valid case
 
             // If it failed to update the lockfile, keep trying unless
             // the lockfile was deleted!
