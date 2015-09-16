@@ -101,7 +101,7 @@ function updateLock(file, options) {
             }
 
             // Verify if we are within the stale threshold
-            if (lock.lastUpdate <= Date.now() - options.stale) {
+            if (lock.lastUpdate <= Date.now() - options.stale
              && lock.lastUpdate > Date.now() - options.stale * 2) {
                 return compromisedLock(file, lock, 
                     errcode(lock.updateError || 'Unable to update lock within the stale threshold', 'ECOMPROMISED'));
