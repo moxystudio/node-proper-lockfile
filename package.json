@@ -5,9 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha test/test.js",
-    "test-travis": "istanbul cover node_modules/.bin/_mocha --report lcovonly",
-    "coverage": "istanbul cover node_modules/.bin/_mocha",
-    "open-coverage": "open coverage/lcov-report/index.html"
+    "test-cov": "istanbul cover node_modules/.bin/_mocha && echo open test/coverage/lcov-report/index.html",
+    "test-travis": "istanbul cover node_modules/.bin/_mocha --report lcovonly"
   },
   "bugs": {
     "url": "https://github.com/IndigoUnited/node-proper-lockfile/issues/"
