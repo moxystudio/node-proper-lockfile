@@ -268,6 +268,13 @@ function lockSync(file, options, compromised) {
 
     options = options || {};
     options.fs = syncFs(options.fs || fs);
+    options.retries = options.retries || 0;
+    options.retries = typeof options.retries === 'number' ? { retries: options.retries } : options.retries;
+
+    // Retries are not allowed because it requires the flow to be sync
+    if (options.retries.retries) {
+        throw errcode('Cannot use retries with the sync api', 'ESYNC');
+    }
 
     lock(file, options, compromised, function (_err, _release) {
         err = _err;

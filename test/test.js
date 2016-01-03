@@ -814,6 +814,26 @@ describe('sync api', function () {
         }).to.throwException(/already being hold/);
     });
 
+    it('should not allow retries to be passed', function () {
+        expect(function () {
+            lockfile.lockSync(tmpFile, { retries: 10 });
+        }).to.throwException(/Cannot use retries/i);
+
+        expect(function () {
+            lockfile.lockSync(tmpFile, { retries: { retries: 10 } });
+        }).to.throwException(/Cannot use retries/i);
+
+        expect(function () {
+            var release = lockfile.lockSync(tmpFile, { retries: 0 });
+            release();
+        }).to.not.throwException();
+
+        expect(function () {
+            var release = lockfile.lockSync(tmpFile, { retries: { retries: 0 } });
+            release();
+        }).to.not.throwException();
+    });
+
     it('should expose a working unlockSync', function () {
         // Test success
         lockfile.lockSync(tmpFile);
