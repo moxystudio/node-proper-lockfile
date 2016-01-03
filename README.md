@@ -1,4 +1,18 @@
-# proper-lockfile [![Build Status](https://travis-ci.org/IndigoUnited/node-proper-lockfile.svg?branch=master)](https://travis-ci.org/IndigoUnited/node-proper-lockfile) [![Coverage Status](https://coveralls.io/repos/IndigoUnited/node-proper-lockfile/badge.png?branch=master)](https://coveralls.io/r/IndigoUnited/node-proper-lockfile?branch=master)
+# proper-lockfile
+
+[![NPM version][npm-image]][npm-url] [![Downloads][downloads-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency status][david-dm-image]][david-dm-url] [![Coverage Status][coveralls-image]][coveralls-url] [![Dev Dependency status][david-dm-dev-image]][david-dm-dev-url]
+
+[npm-url]:https://npmjs.org/package/proper-lockfile
+[downloads-image]:http://img.shields.io/npm/dm/proper-lockfile.svg
+[npm-image]:http://img.shields.io/npm/v/proper-lockfile.svg
+[travis-url]:https://travis-ci.org/IndigoUnited/node-proper-lockfile
+[travis-image]:http://img.shields.io/travis/IndigoUnited/node-proper-lockfile.svg
+[coveralls-url]:https://coveralls.io/r/IndigoUnited/node-proper-lockfile
+[coveralls-image]:https://img.shields.io/coveralls/jekyll/jekyll.svg
+[david-dm-url]:https://david-dm.org/IndigoUnited/node-proper-lockfile
+[david-dm-image]:https://img.shields.io/david/IndigoUnited/node-proper-lockfile.svg
+[david-dm-dev-url]:https://david-dm.org/IndigoUnited/node-proper-lockfile#info=devDependencies
+[david-dm-dev-image]:https://img.shields.io/david/dev/IndigoUnited/node-proper-lockfile.svg
 
 A inter-process and inter-machine lockfile utility that works on a local or network file system.
 
