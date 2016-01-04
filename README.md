@@ -168,7 +168,8 @@ process
 
 ## Tests
 
-Simply run the test suite with `$ npm test`
+`$ npm test`
+`$ npm test-cov` to get coverage report
 
 The test suite is very extensive. There's even a stress test to guarantee exclusiveness of locks.
 
