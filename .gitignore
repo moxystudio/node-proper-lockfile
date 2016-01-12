@@ -4,4 +4,4 @@
 /test/nonexistentfile*
 /test/*.log
 /test/coverage
-.coveralls.yml
+

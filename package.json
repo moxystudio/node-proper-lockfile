@@ -4,7 +4,7 @@
   "description": "A inter-process and inter-machine lockfile utility that works on a local or network file system.",
   "main": "index.js",
   "scripts": {
-    "test": "mocha -R spec --bail",
+    "test": "mocha --bail",
     "test-cov": "istanbul cover --dir test/coverage _mocha -- --bail && echo open test/coverage/lcov-report/index.html",
     "test-travis": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- --bail && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
   },
