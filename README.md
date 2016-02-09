@@ -19,7 +19,7 @@ A inter-process and inter-machine lockfile utility that works on a local or netw
 
 ## Installation
 
-`$ npm install proper-lockfile --save`
+`$ npm install proper-lockfile`
 
 
 ## Design
