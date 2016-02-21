@@ -6,9 +6,9 @@
 [downloads-image]:http://img.shields.io/npm/dm/proper-lockfile.svg
 [npm-image]:http://img.shields.io/npm/v/proper-lockfile.svg
 [travis-url]:https://travis-ci.org/IndigoUnited/node-proper-lockfile
-[travis-image]:http://img.shields.io/travis/IndigoUnited/node-proper-lockfile.svg
+[travis-image]:http://img.shields.io/travis/IndigoUnited/node-proper-lockfile/master.svg
 [coveralls-url]:https://coveralls.io/r/IndigoUnited/node-proper-lockfile
-[coveralls-image]:https://img.shields.io/coveralls/IndigoUnited/node-proper-lockfile.svg
+[coveralls-image]:https://img.shields.io/coveralls/IndigoUnited/node-proper-lockfile/master.svg
 [david-dm-url]:https://david-dm.org/IndigoUnited/node-proper-lockfile
 [david-dm-image]:https://img.shields.io/david/IndigoUnited/node-proper-lockfile.svg
 [david-dm-dev-url]:https://david-dm.org/IndigoUnited/node-proper-lockfile#info=devDependencies
