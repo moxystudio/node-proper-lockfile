@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha --bail",
     "test-cov": "istanbul cover --dir test/coverage _mocha -- --bail && echo open test/coverage/lcov-report/index.html",
-    "test-travis": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- --bail && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
+    "test-travis": "istanbul cover _mocha --report lcovonly -- --bail && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
   },
   "bugs": {
     "url": "https://github.com/IndigoUnited/node-proper-lockfile/issues/"
