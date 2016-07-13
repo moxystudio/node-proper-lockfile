@@ -34,7 +34,7 @@
     "retry": "^0.9.0"
   },
   "devDependencies": {
-    "async": "^1.5.1",
+    "async": "^2.0.0",
     "buffered-spawn": "^2.0.4",
     "coveralls": "^2.11.6",
     "expect.js": "^0.3.1",
