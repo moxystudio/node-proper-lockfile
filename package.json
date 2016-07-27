@@ -36,7 +36,7 @@
   "devDependencies": {
     "async": "^2.0.0",
     "buffered-spawn": "^2.0.4",
-    "coveralls": "^2.11.6",
+    "coveralls": "^2.11.12",
     "expect.js": "^0.3.1",
     "istanbul": "^0.4.1",
     "mocha": "^2.3.4",
