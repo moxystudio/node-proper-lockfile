@@ -728,6 +728,171 @@ describe('.unlock()', function () {
     });
 });
 
+describe('.check()', function () {
+    beforeEach(function () {
+        fs.writeFileSync(tmpFile, '');
+        rimraf.sync(tmpFileSymlink);
+    });
+
+    afterEach(clearLocks);
+
+    this.timeout(5000);
+
+    it('should fail if the file does not exist by default', function (next) {
+        lockfile.check(tmpNonExistentFile, function (err) {
+            expect(err).to.be.an(Error);
+            expect(err.code).to.be('ENOENT');
+
+            next();
+        });
+    });
+
+    it('should not fail if the file does not exist and realpath is false', function (next) {
+        lockfile.check(tmpNonExistentFile, { realpath: false }, function (err) {
+            expect(err).to.not.be.ok();
+
+            next();
+        });
+    });
+
+    it('should callback with true if file is locked', function (next) {
+        lockfile.lock(tmpFile, function (err) {
+            expect(err).to.not.be.ok();
+
+            lockfile.check(tmpFile, function (err, locked) {
+                expect(err).to.not.be.ok(); 
+                expect(locked).to.be(true);
+                next();
+            });
+        });
+    });
+
+    it('should callback with false if file is not locked', function (next) {
+        lockfile.check(tmpFile, function (err, locked) {
+            expect(err).to.not.be.ok();
+            expect(locked).to.be(false);
+            next();
+        });
+    });
+
+    it('should use the custom fs', function (next) {
+        var customFs = extend({}, fs);
+
+        customFs.realpath = function (path, callback) {
+            customFs.realpath = fs.realpath;
+            callback(new Error('foo'));
+        };
+
+        lockfile.check(tmpFile, { fs: customFs }, function (err, locked) {
+            expect(err).to.be.an(Error);
+            expect(locked).to.be(undefined);
+
+            next();
+        });
+    });
+
+    it('should resolve symlinks by default', function (next) {
+        // Create a symlink to the tmp file
+        fs.symlinkSync(tmpFileRealPath, tmpFileSymlinkRealPath);
+
+        lockfile.lock(tmpFileSymlink, function (err) {
+            expect(err).to.not.be.ok();
+
+            lockfile.check(tmpFile, function (err, locked) {
+                expect(err).to.not.be.ok();
+                expect(locked).to.be(true);
+
+                lockfile.check(tmpFile + '/../../test/tmp', function (err, locked) {
+                    expect(err).to.not.be.ok();
+                    expect(locked).to.be(true);
+                    next();
+                });
+            });
+        });
+    });
+
+    it('should not resolve symlinks if realpath is false', function (next) {
+        // Create a symlink to the tmp file
+        fs.symlinkSync(tmpFileRealPath, tmpFileSymlinkRealPath);
+
+        lockfile.lock(tmpFileSymlink, { realpath: false }, function (err) {
+            expect(err).to.not.be.ok();
+
+            lockfile.check(tmpFile, { realpath: false }, function (err, locked) {
+                expect(err).to.not.be.ok();
+                expect(locked).to.be(false);
+
+                lockfile.check(tmpFile + '/../../test/tmp', { realpath: false }, function (err, locked) {
+                    expect(err).to.not.be.ok();
+                    expect(locked).to.be(false);
+
+                    next();
+                });
+            });
+        });
+    });
+
+    it('should fail if stating the lockfile errors out when verifying staleness', function (next) {
+        var mtime = (Date.now() - 60000) / 1000;
+        var customFs = extend({}, fs);
+
+        customFs.stat = function (path, callback) {
+            callback(new Error('foo'));
+        };
+
+        fs.mkdirSync(tmpFileLock);
+        fs.utimesSync(tmpFileLock, mtime, mtime);
+
+        lockfile.check(tmpFile, { fs: customFs }, function (err, locked) {
+            expect(err).to.be.an(Error);
+            expect(err.message).to.be('foo');
+            expect(locked).to.be(undefined);
+
+            next();
+        });
+    });
+
+    it('should set stale to a minimum of 2000', function (next) {
+        fs.mkdirSync(tmpFileLock);
+
+        setTimeout(function () {
+            lockfile.lock(tmpFile, { stale: 2000 }, function (err) {
+                expect(err).to.be.an(Error);
+                expect(err.code).to.be('ELOCKED');
+            });
+        }, 200);
+
+        setTimeout(function () {
+            lockfile.check(tmpFile, { stale: 100 }, function (err, locked) {
+                expect(err).to.not.be.ok();
+                expect(locked).to.equal(false);
+
+                next();
+            });
+        }, 2200);
+    });
+
+    it('should set stale to a minimum of 2000 (falsy)', function (next) {
+        fs.mkdirSync(tmpFileLock);
+
+        setTimeout(function () {
+            lockfile.lock(tmpFile, { stale: 2000 }, function (err) {
+                expect(err).to.be.an(Error);
+                expect(err.code).to.be('ELOCKED');
+            });
+        }, 200);
+
+        setTimeout(function () {
+            lockfile.check(tmpFile, { stale: false }, function (err, locked) {
+                expect(err).to.not.be.ok();
+                expect(locked).to.equal(false);
+
+                next();
+            });
+        }, 2200);
+    });
+});
+
 describe('release()', function () {
     beforeEach(function () {
         fs.writeFileSync(tmpFile, '');
