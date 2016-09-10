@@ -1055,6 +1055,48 @@ describe('sync api', function () {
         lockfile.lockSync(tmpFile, { fs: customFs });
         expect(called).to.be(true);
     });
+
+    it('should expose a working checkSync', function () {
+        var release;
+        var locked;
+
+        // Test success unlocked
+        locked = lockfile.checkSync(tmpFile); 
+        expect(locked).to.be.a('boolean');
+        expect(locked).to.be(false);
+
+        // Test success locked
+        release = lockfile.lockSync(tmpFile);
+        locked = lockfile.checkSync(tmpFile);
+        expect(locked).to.be.a('boolean');
+        expect(locked).to.be(true);
+
+        // Test success unlocked after release
+        release();
+        locked = lockfile.checkSync(tmpFile);
+        expect(locked).to.be.a('boolean');
+        expect(locked).to.be(false);
+
+        // Test options being passed
+        locked = lockfile.checkSync(tmpFile, {});
+        expect(locked).to.be.a('boolean');
+        expect(locked).to.be(false);
+
+        release = lockfile.lockSync(tmpFile);
+        locked = lockfile.checkSync(tmpFile, {});
+        expect(locked).to.be.a('boolean');
+        expect(locked).to.be(true);
+
+        release();
+        locked = lockfile.checkSync(tmpFile, {});
+        expect(locked).to.be.a('boolean');
+        expect(locked).to.be(false);
+
+        // Test fail with non-existent file
+        expect(function () {
+            lockfile.checkSync('nonexistentdir/nonexistentfile');
+        }).to.throwException(/ENOENT/);
+    });
 });
 
 describe('misc', function () {

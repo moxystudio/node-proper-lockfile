@@ -165,6 +165,11 @@ Returns the `release` function or throws on error.
 Sync version of `.unlock()`.   
 Throws on error.
 
+### .checkSync(file, [options])
+
+Sync version of `.check()`.
+Returns a boolean or throws on error.
+
 
 ## Graceful exit
 

@@ -171,8 +171,7 @@ function lock(file, options, compromised, callback) {
         update: null,
         realpath: true,
         retries: 0,
-        fs: fs,
-        check: false
+        fs: fs
     }, options);
 
     options.retries = options.retries || 0;
@@ -308,7 +307,6 @@ function unlockSync(file, options) {
     }
 }
 
-// checks if file is currently locked. callback with boolean, true if locked, false if unlocked. 
 function check(file, options, callback) {
     if (typeof options === 'function') {
         callback = options;
@@ -344,6 +342,25 @@ function check(file, options, callback) {
     });
 } 
 
+function checkSync(file, options) {
+    var err;
+    var locked;
+
+    options = options || {};
+    options.fs = syncFs(options.fs || fs);
+
+    check(file, options, function (_err, _locked) {
+        err = _err;
+        locked = _locked;
+    });
+
+    if (err) {
+        throw err;
+    }
+
+    return locked; 
+}
+
 
 // Remove acquired locks on exit
 /* istanbul ignore next */
@@ -359,3 +376,4 @@ module.exports.unlock = unlock;
 module.exports.lockSync = lockSync;
 module.exports.unlockSync = unlockSync;
 module.exports.check = check;
+module.exports.checkSync = checkSync;
