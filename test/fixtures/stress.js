@@ -95,8 +95,7 @@ function master() {
                     acquired = false;
                     break;
                 default:
-                    process.stdout.write('\nUnknown symbol\n');
-                    process.exit(1);
+                    // do nothing
                 }
             });
 
