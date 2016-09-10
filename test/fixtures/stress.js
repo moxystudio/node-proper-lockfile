@@ -16,10 +16,10 @@ function printExcerpt(logs, index) {
 }
 
 function master() {
-    var logs = [],
-        numCPUs = os.cpus().length,
-        i,
-        acquired;
+    var logs = [];
+    var numCPUs = os.cpus().length;
+    var i;
+    var acquired;
 
     fs.writeFileSync(file, '');
     rimraf.sync(file + '.lock');
@@ -58,15 +58,18 @@ function master() {
             logs = sort(logs, function (log1, log2) {
                 if (log1.timestamp > log2.timestamp) {
                     return 1;
-                } else if (log1.timestamp < log2.timestamp) {
-                    return -1;
-                } else if (log1.message === 'LOCK_RELEASED') {
-                    return -1;
-                } else if (log2.message === 'LOCK_RELEASED') {
-                    return 1;
-                } else {
-                    return 0;
                 }
+                if (log1.timestamp < log2.timestamp) {
+                    return -1;
+                }
+                if (log1.message === 'LOCK_RELEASED') {
+                    return -1;
+                }
+                if (log2.message === 'LOCK_RELEASED') {
+                    return 1;
+                }
+
+                return 0;
             });
 
             // Validate logs
@@ -81,7 +84,7 @@ function master() {
                     }
 
                     acquired = true;
-                break;
+                    break;
                 case 'LOCK_RELEASED':
                     if (!acquired) {
                         process.stdout.write('\nInconsistent at line ' + (index + 1) + '\n');
@@ -90,6 +93,10 @@ function master() {
                     }
 
                     acquired = false;
+                    break;
+                default:
+                    process.stdout.write('\nUnknown symbol\n');
+                    process.exit(1);
                 }
             });
 

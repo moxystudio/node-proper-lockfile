@@ -4,6 +4,7 @@
   "description": "A inter-process and inter-machine lockfile utility that works on a local or network file system.",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint '{*.js,lib/**/*.js,test/**/*.js}' --ignore-pattern=test/coverage",
     "test": "mocha --bail",
     "test-cov": "istanbul cover --dir test/coverage _mocha -- --bail && echo open test/coverage/lcov-report/index.html",
     "test-travis": "istanbul cover _mocha --report lcovonly -- --bail && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
@@ -34,9 +35,12 @@
     "retry": "^0.10.0"
   },
   "devDependencies": {
+    "@satazor/eslint-config": "^3.1.1",
     "async": "^2.0.0",
     "buffered-spawn": "^2.0.4",
     "coveralls": "^2.11.6",
+    "eslint": "^3.5.0",
+    "eslint-plugin-react": "^6.2.0",
     "expect.js": "^0.3.1",
     "istanbul": "^0.4.1",
     "mocha": "^3.0.2",

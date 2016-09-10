@@ -3,7 +3,7 @@
 var fs = require('graceful-fs');
 var path = require('path');
 var cp = require('child_process');
-var expect  = require('expect.js');
+var expect = require('expect.js');
 var extend = require('extend');
 var rimraf = require('rimraf');
 var spawn = require('buffered-spawn');
@@ -302,6 +302,7 @@ describe('.lock()', function () {
             // First update occurs at 1000ms
             setTimeout(function () {
                 var stat = fs.statSync(tmpFileLock);
+
                 expect(stat.mtime.getTime()).to.be.greaterThan(mtime.getTime());
                 mtime = stat.mtime;
             }, 1500);
@@ -309,6 +310,7 @@ describe('.lock()', function () {
             // Second update occurs at 2000ms
             setTimeout(function () {
                 var stat = fs.statSync(tmpFileLock);
+
                 expect(stat.mtime.getTime()).to.be.greaterThan(mtime.getTime());
                 mtime = stat.mtime;
 
@@ -388,7 +390,6 @@ describe('.lock()', function () {
             expect(err.code).to.be('ECOMPROMISED');
 
             next();
-
         }, function (err) {
             expect(err).to.not.be.ok();
         });
@@ -825,11 +826,13 @@ describe('sync api', function () {
 
         expect(function () {
             var release = lockfile.lockSync(tmpFile, { retries: 0 });
+
             release();
         }).to.not.throwException();
 
         expect(function () {
             var release = lockfile.lockSync(tmpFile, { retries: { retries: 0 } });
+
             release();
         }).to.not.throwException();
     });
@@ -859,6 +862,7 @@ describe('sync api', function () {
         // First update occurs at 1000ms
         setTimeout(function () {
             var stat = fs.statSync(tmpFileLock);
+
             expect(stat.mtime.getTime()).to.be.greaterThan(mtime.getTime());
             mtime = stat.mtime;
         }, 1500);
@@ -866,6 +870,7 @@ describe('sync api', function () {
         // Second update occurs at 2000ms
         setTimeout(function () {
             var stat = fs.statSync(tmpFileLock);
+
             expect(stat.mtime.getTime()).to.be.greaterThan(mtime.getTime());
             mtime = stat.mtime;
 
@@ -874,8 +879,8 @@ describe('sync api', function () {
     });
 
     it('should use a custom fs', function () {
-        var customFs = extend({}, fs),
-            called;
+        var customFs = extend({}, fs);
+        var called;
 
         customFs.realpathSync = function () {
             called = true;

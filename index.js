@@ -167,7 +167,7 @@ function lock(file, options, compromised, callback) {
         update: null,
         realpath: true,
         retries: 0,
-        fs: fs
+        fs: fs,
     }, options);
 
     options.retries = options.retries || 0;
@@ -203,7 +203,7 @@ function lock(file, options, compromised, callback) {
                 locks[file] = lock = {
                     options: options,
                     compromised: compromised,
-                    lastUpdate: Date.now()
+                    lastUpdate: Date.now(),
                 };
 
                 // We must keep the lock fresh to avoid staleness
@@ -230,7 +230,7 @@ function unlock(file, options, callback) {
 
     options = extend({
         fs: fs,
-        realpath: true
+        realpath: true,
     }, options);
 
     callback = callback || function () {};
@@ -258,8 +258,8 @@ function unlock(file, options, callback) {
 }
 
 function lockSync(file, options, compromised) {
-    var err,
-        release;
+    var err;
+    var release;
 
     if (typeof options === 'function') {
         compromised = options;
@@ -308,7 +308,7 @@ function unlockSync(file, options) {
 /* istanbul ignore next */
 process.on('exit', function () {
     Object.keys(locks).forEach(function (file) {
-        try { locks[file].options.fs.rmdirSync(getLockFile(file)); } catch (e) {}
+        try { locks[file].options.fs.rmdirSync(getLockFile(file)); } catch (e) { /* empty */ }
     });
 });
 
