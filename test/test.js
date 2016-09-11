@@ -760,7 +760,7 @@ describe('.check()', function () {
             expect(err).to.not.be.ok();
 
             lockfile.check(tmpFile, function (err, locked) {
-                expect(err).to.not.be.ok(); 
+                expect(err).to.not.be.ok();
                 expect(locked).to.be(true);
                 next();
             });
@@ -1061,7 +1061,7 @@ describe('sync api', function () {
         var locked;
 
         // Test success unlocked
-        locked = lockfile.checkSync(tmpFile); 
+        locked = lockfile.checkSync(tmpFile);
         expect(locked).to.be.a('boolean');
         expect(locked).to.be(false);
 

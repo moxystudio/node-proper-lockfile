@@ -52,7 +52,7 @@ function acquireLock(file, options, callback) {
                 return callback(err);
             }
 
-            if (! isLockStale(stat, options)){
+            if (!isLockStale(stat, options)) {
                 return callback(errcode('Lock file is already being hold', 'ELOCKED', { file: file }));
             }
 
@@ -69,7 +69,7 @@ function acquireLock(file, options, callback) {
     });
 }
 
-function isLockStale(stat, options){
+function isLockStale(stat, options) {
     return stat.mtime.getTime() < Date.now() - options.stale;
 }
 
@@ -171,7 +171,7 @@ function lock(file, options, compromised, callback) {
         update: null,
         realpath: true,
         retries: 0,
-        fs: fs
+        fs: fs,
     }, options);
 
     options.retries = options.retries || 0;
@@ -316,7 +316,7 @@ function check(file, options, callback) {
     options = extend({
         stale: 10000,
         realpath: true,
-        fs: fs
+        fs: fs,
     }, options);
 
     options.stale = Math.max(options.stale || 0, 2000);
@@ -333,14 +333,14 @@ function check(file, options, callback) {
                 // if does not exist, file is not locked. Otherwise, callback with error
                 return (err.code === 'ENOENT') ? callback(null, false) : callback(err);
             }
-            
-            if (options.stale <= 0) return callback(null, true);
+
+            if (options.stale <= 0) { return callback(null, true); }
 
             // Otherwise, check if lock is stale by analyzing the file mtime
-            return callback(null, ! isLockStale(stat, options));
+            return callback(null, !isLockStale(stat, options));
         });
     });
-} 
+}
 
 function checkSync(file, options) {
     var err;
@@ -358,7 +358,7 @@ function checkSync(file, options) {
         throw err;
     }
 
-    return locked; 
+    return locked;
 }
 
 
