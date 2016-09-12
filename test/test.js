@@ -1016,46 +1016,6 @@ describe('sync api', function () {
         }).to.throwException(/not acquired\/owned by you/);
     });
 
-    it('should update the lockfile mtime automatically', function (next) {
-        var mtime;
-
-        this.timeout(5000);
-
-        lockfile.lockSync(tmpFile, { update: 1000 });
-        mtime = fs.statSync(tmpFileLock).mtime;
-
-        // First update occurs at 1000ms
-        setTimeout(function () {
-            var stat = fs.statSync(tmpFileLock);
-
-            expect(stat.mtime.getTime()).to.be.greaterThan(mtime.getTime());
-            mtime = stat.mtime;
-        }, 1500);
-
-        // Second update occurs at 2000ms
-        setTimeout(function () {
-            var stat = fs.statSync(tmpFileLock);
-
-            expect(stat.mtime.getTime()).to.be.greaterThan(mtime.getTime());
-            mtime = stat.mtime;
-
-            next();
-        }, 2500);
-    });
-
-    it('should use a custom fs', function () {
-        var customFs = extend({}, fs);
-        var called;
-
-        customFs.realpathSync = function () {
-            called = true;
-            return fs.realpathSync.apply(fs, arguments);
-        };
-
-        lockfile.lockSync(tmpFile, { fs: customFs });
-        expect(called).to.be(true);
-    });
-
     it('should expose a working checkSync', function () {
         var release;
         var locked;
@@ -1096,6 +1056,46 @@ describe('sync api', function () {
         expect(function () {
             lockfile.checkSync('nonexistentdir/nonexistentfile');
         }).to.throwException(/ENOENT/);
+    });
+
+    it('should update the lockfile mtime automatically', function (next) {
+        var mtime;
+
+        this.timeout(5000);
+
+        lockfile.lockSync(tmpFile, { update: 1000 });
+        mtime = fs.statSync(tmpFileLock).mtime;
+
+        // First update occurs at 1000ms
+        setTimeout(function () {
+            var stat = fs.statSync(tmpFileLock);
+
+            expect(stat.mtime.getTime()).to.be.greaterThan(mtime.getTime());
+            mtime = stat.mtime;
+        }, 1500);
+
+        // Second update occurs at 2000ms
+        setTimeout(function () {
+            var stat = fs.statSync(tmpFileLock);
+
+            expect(stat.mtime.getTime()).to.be.greaterThan(mtime.getTime());
+            mtime = stat.mtime;
+
+            next();
+        }, 2500);
+    });
+
+    it('should use a custom fs', function () {
+        var customFs = extend({}, fs);
+        var called;
+
+        customFs.realpathSync = function () {
+            called = true;
+            return fs.realpathSync.apply(fs, arguments);
+        };
+
+        lockfile.lockSync(tmpFile, { fs: customFs });
+        expect(called).to.be(true);
     });
 });
 
