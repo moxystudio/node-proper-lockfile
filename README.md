@@ -134,6 +134,25 @@ lockfile.lock('some/file', function (err) {
 });
 ```
 
+### .check(file, [options], callback)
+
+Check if the file is locked and its lockfile is not stale. Callback is called with callback(error, isLocked).
+   
+Available options:
+
+- `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (minimum value is `5000`)
+- `realpath`: Resolve symlinks using realpath, defaults to `true` (note that if `true`, the `file` must exist previously)
+- `fs`: A custom fs to use, defaults to `graceful-fs`
+
+```js
+var lockfile = require('proper-lockfile');
+
+lockfile.check('some/file', function (err, isLocked) {
+    if (err) throw err;
+
+    // isLocked will be true if 'some/file' is locked, otherwise will be false if not locked
+});
+```
 
 ### .lockSync(file, [options], [compromised])
 
@@ -145,6 +164,11 @@ Returns the `release` function or throws on error.
 
 Sync version of `.unlock()`.   
 Throws on error.
+
+### .checkSync(file, [options])
+
+Sync version of `.check()`.
+Returns a boolean or throws on error.
 
 
 ## Graceful exit

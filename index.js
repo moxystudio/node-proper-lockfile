@@ -52,7 +52,7 @@ function acquireLock(file, options, callback) {
                 return callback(err);
             }
 
-            if (stat.mtime.getTime() >= Date.now() - options.stale) {
+            if (!isLockStale(stat, options)) {
                 return callback(errcode('Lock file is already being hold', 'ELOCKED', { file: file }));
             }
 
@@ -67,6 +67,10 @@ function acquireLock(file, options, callback) {
             });
         });
     });
+}
+
+function isLockStale(stat, options) {
+    return stat.mtime.getTime() < Date.now() - options.stale;
 }
 
 function removeLock(file, options, callback) {
@@ -303,6 +307,60 @@ function unlockSync(file, options) {
     }
 }
 
+function check(file, options, callback) {
+    if (typeof options === 'function') {
+        callback = options;
+        options = null;
+    }
+
+    options = extend({
+        stale: 10000,
+        realpath: true,
+        fs: fs,
+    }, options);
+
+    options.stale = Math.max(options.stale || 0, 2000);
+
+    // Resolve to a canonical file path
+    canonicalPath(file, options, function (err, file) {
+        if (err) {
+            return callback(err);
+        }
+
+        // Check if lockfile exists
+        options.fs.stat(getLockFile(file), function (err, stat) {
+            if (err) {
+                // if does not exist, file is not locked. Otherwise, callback with error
+                return (err.code === 'ENOENT') ? callback(null, false) : callback(err);
+            }
+
+            if (options.stale <= 0) { return callback(null, true); }
+
+            // Otherwise, check if lock is stale by analyzing the file mtime
+            return callback(null, !isLockStale(stat, options));
+        });
+    });
+}
+
+function checkSync(file, options) {
+    var err;
+    var locked;
+
+    options = options || {};
+    options.fs = syncFs(options.fs || fs);
+
+    check(file, options, function (_err, _locked) {
+        err = _err;
+        locked = _locked;
+    });
+
+    if (err) {
+        throw err;
+    }
+
+    return locked;
+}
+
 
 // Remove acquired locks on exit
 /* istanbul ignore next */
@@ -317,3 +375,5 @@ module.exports.lock = lock;
 module.exports.unlock = unlock;
 module.exports.lockSync = lockSync;
 module.exports.unlockSync = unlockSync;
+module.exports.check = check;
+module.exports.checkSync = checkSync;
