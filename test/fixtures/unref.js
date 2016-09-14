@@ -1,13 +1,13 @@
 'use strict';
 
-var fs = require('fs');
-var lockfile = require('../../');
+const fs = require('fs');
+const lockfile = require('../../');
 
-var file = __dirname + '/../tmp';
+const file = `${__dirname}/../tmp`;
 
 fs.writeFileSync(file, '');
 
-lockfile.lock(file, function (err) {
+lockfile.lock(file, (err) => {
     if (err) {
         throw err;
     }

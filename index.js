@@ -1,16 +1,14 @@
 'use strict';
 
-var fs = require('graceful-fs');
-var path = require('path');
-var extend = require('extend');
-var errcode = require('err-code');
-var retry = require('retry');
-var syncFs = require('./lib/syncFs');
+const fs = require('graceful-fs');
+const path = require('path');
+const retry = require('retry');
+const syncFs = require('./lib/syncFs');
 
-var locks = {};
+const locks = {};
 
 function getLockFile(file) {
-    return file + '.lock';
+    return `${file}.lock`;
 }
 
 function canonicalPath(file, options, callback) {
@@ -25,7 +23,7 @@ function canonicalPath(file, options, callback) {
 
 function acquireLock(file, options, callback) {
     // Use mkdir to create the lockfile (atomic operation)
-    options.fs.mkdir(getLockFile(file), function (err) {
+    options.fs.mkdir(getLockFile(file), (err) => {
         // If successful, we are done
         if (!err) {
             return callback();
@@ -38,32 +36,32 @@ function acquireLock(file, options, callback) {
 
         // Otherwise, check if lock is stale by analyzing the file mtime
         if (options.stale <= 0) {
-            return callback(errcode('Lock file is already being hold', 'ELOCKED', { file: file }));
+            return callback(Object.assign(new Error('Lock file is already being hold'), { code: 'ELOCKED', file }));
         }
 
-        options.fs.stat(getLockFile(file), function (err, stat) {
+        options.fs.stat(getLockFile(file), (err, stat) => {
             if (err) {
                 // Retry if the lockfile has been removed (meanwhile)
                 // Skip stale check to avoid recursiveness
                 if (err.code === 'ENOENT') {
-                    return acquireLock(file, extend({}, options, { stale: 0 }), callback);
+                    return acquireLock(file, Object.assign({}, options, { stale: 0 }), callback);
                 }
 
                 return callback(err);
             }
 
             if (!isLockStale(stat, options)) {
-                return callback(errcode('Lock file is already being hold', 'ELOCKED', { file: file }));
+                return callback(Object.assign(new Error('Lock file is already being hold'), { code: 'ELOCKED', file }));
             }
 
             // If it's stale, remove it and try again!
             // Skip stale check to avoid recursiveness
-            removeLock(file, options, function (err) {
+            removeLock(file, options, (err) => {
                 if (err) {
                     return callback(err);
                 }
 
-                acquireLock(file, extend({}, options, { stale: 0 }), callback);
+                acquireLock(file, Object.assign({}, options, { stale: 0 }), callback);
             });
         });
     });
@@ -75,7 +73,7 @@ function isLockStale(stat, options) {
 
 function removeLock(file, options, callback) {
     // Remove lockfile, ignoring ENOENT errors
-    options.fs.rmdir(getLockFile(file), function (err) {
+    options.fs.rmdir(getLockFile(file), (err) => {
         if (err && err.code !== 'ENOENT') {
             return callback(err);
         }
@@ -85,7 +83,7 @@ function removeLock(file, options, callback) {
 }
 
 function updateLock(file, options) {
-    var lock = locks[file];
+    const lock = locks[file];
 
     /* istanbul ignore next */
     if (lock.updateTimeout) {
@@ -93,12 +91,12 @@ function updateLock(file, options) {
     }
 
     lock.updateDelay = lock.updateDelay || options.update;
-    lock.updateTimeout = setTimeout(function () {
-        var mtime = Date.now() / 1000;
+    lock.updateTimeout = setTimeout(() => {
+        const mtime = Date.now() / 1000;
 
         lock.updateTimeout = null;
 
-        options.fs.utimes(getLockFile(file), mtime, mtime, function (err) {
+        options.fs.utimes(getLockFile(file), mtime, mtime, (err) => {
             // Ignore if the lock was released
             if (lock.released) {
                 return;
@@ -107,8 +105,8 @@ function updateLock(file, options) {
             // Verify if we are within the stale threshold
             if (lock.lastUpdate <= Date.now() - options.stale &&
                 lock.lastUpdate > Date.now() - options.stale * 2) {
-                return compromisedLock(file, lock,
-                    errcode(lock.updateError || 'Unable to update lock within the stale threshold', 'ECOMPROMISED'));
+                return compromisedLock(file, lock, Object.assign(new Error(lock.updateError || 'Unable to update lock within the stale \
+threshold'), { code: 'ECOMPROMISED' }));
             }
 
             // If the file is older than (stale * 2), we assume the clock is moved manually,
@@ -118,7 +116,7 @@ function updateLock(file, options) {
             // the lockfile was deleted!
             if (err) {
                 if (err.code === 'ENOENT') {
-                    return compromisedLock(file, lock, errcode(err, 'ECOMPROMISED'));
+                    return compromisedLock(file, lock, Object.assign(err, { code: 'ECOMPROMISED' }));
                 }
 
                 lock.updateError = err;
@@ -166,12 +164,12 @@ function lock(file, options, compromised, callback) {
         compromised = null;
     }
 
-    options = extend({
+    options = Object.assign({
         stale: 10000,
         update: null,
         realpath: true,
         retries: 0,
-        fs: fs,
+        fs,
     }, options);
 
     options.retries = options.retries || 0;
@@ -182,19 +180,16 @@ function lock(file, options, compromised, callback) {
     compromised = compromised || function (err) { throw err; };
 
     // Resolve to a canonical file path
-    canonicalPath(file, options, function (err, file) {
-        var operation;
-
+    canonicalPath(file, options, (err, file) => {
         if (err) {
             return callback(err);
         }
 
         // Attempt to acquire the lock
-        operation = retry.operation(options.retries);
-        operation.attempt(function () {
-            acquireLock(file, options, function (err) {
-                var lock;
+        const operation = retry.operation(options.retries);
 
+        operation.attempt(() => {
+            acquireLock(file, options, (err) => {
                 if (operation.retry(err)) {
                     return;
                 }
@@ -204,22 +199,23 @@ function lock(file, options, compromised, callback) {
                 }
 
                 // We now own the lock
-                locks[file] = lock = {
-                    options: options,
-                    compromised: compromised,
+                const lock = locks[file] = {
+                    options,
+                    compromised,
                     lastUpdate: Date.now(),
                 };
 
                 // We must keep the lock fresh to avoid staleness
                 updateLock(file, options);
 
-                callback(null, function (releasedCallback) {
+                callback(null, (releasedCallback) => {
                     if (lock.released) {
-                        return releasedCallback && releasedCallback(errcode('Lock is already released', 'ERELEASED'));
+                        return releasedCallback &&
+                            releasedCallback(Object.assign(new Error('Lock is already released'), { code: 'ERELEASED' }));
                     }
 
                     // Not necessary to use realpath twice when unlocking
-                    unlock(file, extend({}, options, { realpath: false }), releasedCallback);
+                    unlock(file, Object.assign({}, options, { realpath: false }), releasedCallback);
                 });
             });
         });
@@ -232,25 +228,24 @@ function unlock(file, options, callback) {
         options = null;
     }
 
-    options = extend({
-        fs: fs,
+    options = Object.assign({
+        fs,
         realpath: true,
     }, options);
 
     callback = callback || function () {};
 
     // Resolve to a canonical file path
-    canonicalPath(file, options, function (err, file) {
-        var lock;
-
+    canonicalPath(file, options, (err, file) => {
         if (err) {
             return callback(err);
         }
 
         // Skip if the lock is not acquired
-        lock = locks[file];
+        const lock = locks[file];
+
         if (!lock) {
-            return callback(errcode('Lock is not acquired/owned by you', 'ENOTACQUIRED'));
+            return callback(Object.assign(new Error('Lock is not acquired/owned by you'), { code: 'ENOTACQUIRED' }));
         }
 
         lock.updateTimeout && clearTimeout(lock.updateTimeout);  // Cancel lock mtime update
@@ -262,9 +257,6 @@ function unlock(file, options, callback) {
 }
 
 function lockSync(file, options, compromised) {
-    var err;
-    var release;
-
     if (typeof options === 'function') {
         compromised = options;
         options = null;
@@ -277,10 +269,13 @@ function lockSync(file, options, compromised) {
 
     // Retries are not allowed because it requires the flow to be sync
     if (options.retries.retries) {
-        throw errcode('Cannot use retries with the sync api', 'ESYNC');
+        throw Object.assign(new Error('Cannot use retries with the sync api'), { code: 'ESYNC' });
     }
 
-    lock(file, options, compromised, function (_err, _release) {
+    let err;
+    let release;
+
+    lock(file, options, compromised, (_err, _release) => {
         err = _err;
         release = _release;
     });
@@ -293,12 +288,12 @@ function lockSync(file, options, compromised) {
 }
 
 function unlockSync(file, options) {
-    var err;
-
     options = options || {};
     options.fs = syncFs(options.fs || fs);
 
-    unlock(file, options, function (_err) {
+    let err;
+
+    unlock(file, options, (_err) => {
         err = _err;
     });
 
@@ -313,22 +308,22 @@ function check(file, options, callback) {
         options = null;
     }
 
-    options = extend({
+    options = Object.assign({
         stale: 10000,
         realpath: true,
-        fs: fs,
+        fs,
     }, options);
 
     options.stale = Math.max(options.stale || 0, 2000);
 
     // Resolve to a canonical file path
-    canonicalPath(file, options, function (err, file) {
+    canonicalPath(file, options, (err, file) => {
         if (err) {
             return callback(err);
         }
 
         // Check if lockfile exists
-        options.fs.stat(getLockFile(file), function (err, stat) {
+        options.fs.stat(getLockFile(file), (err, stat) => {
             if (err) {
                 // if does not exist, file is not locked. Otherwise, callback with error
                 return (err.code === 'ENOENT') ? callback(null, false) : callback(err);
@@ -343,13 +338,13 @@ function check(file, options, callback) {
 }
 
 function checkSync(file, options) {
-    var err;
-    var locked;
-
     options = options || {};
     options.fs = syncFs(options.fs || fs);
 
-    check(file, options, function (_err, _locked) {
+    let err;
+    let locked;
+
+    check(file, options, (_err, _locked) => {
         err = _err;
         locked = _locked;
     });
@@ -364,8 +359,8 @@ function checkSync(file, options) {
 
 // Remove acquired locks on exit
 /* istanbul ignore next */
-process.on('exit', function () {
-    Object.keys(locks).forEach(function (file) {
+process.on('exit', () => {
+    Object.keys(locks).forEach((file) => {
         try { locks[file].options.fs.rmdirSync(getLockFile(file)); } catch (e) { /* empty */ }
     });
 });
