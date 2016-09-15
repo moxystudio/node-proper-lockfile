@@ -4,7 +4,6 @@ const fs = require('graceful-fs');
 const path = require('path');
 const cp = require('child_process');
 const expect = require('expect.js');
-const extend = require('extend');
 const rimraf = require('rimraf');
 const spawn = require('buffered-spawn');
 const async = require('async');
@@ -134,7 +133,7 @@ describe('.lock()', () => {
     });
 
     it('should use the custom fs', (next) => {
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.realpath = function (path, callback) {
             customFs.realpath = fs.realpath;
@@ -206,7 +205,7 @@ describe('.lock()', () => {
 
     it('should retry if the lockfile was removed when verifying staleness', (next) => {
         const mtime = (Date.now() - 60000) / 1000;
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.stat = function (path, callback) {
             rimraf.sync(tmpFileLock);
@@ -227,7 +226,7 @@ describe('.lock()', () => {
 
     it('should retry if the lockfile was removed when verifying staleness (not recursively)', (next) => {
         const mtime = (Date.now() - 60000) / 1000;
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.stat = function (path, callback) {
             const err = new Error();
@@ -250,7 +249,7 @@ describe('.lock()', () => {
 
     it('should fail if stating the lockfile errors out when verifying staleness', (next) => {
         const mtime = (Date.now() - 60000) / 1000;
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.stat = function (path, callback) {
             callback(new Error('foo'));
@@ -269,7 +268,7 @@ describe('.lock()', () => {
 
     it('should fail if removing a stale lockfile errors out', (next) => {
         const mtime = (Date.now() - 60000) / 1000;
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.rmdir = function (path, callback) {
             callback(new Error('foo'));
@@ -369,7 +368,7 @@ describe('.lock()', () => {
     });
 
     it('should call the compromised function if failed to update the lockfile mtime too many times', (next) => {
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.utimes = function (path, atime, mtime, callback) {
             callback(new Error('foo'));
@@ -387,7 +386,7 @@ describe('.lock()', () => {
     });
 
     it('should call the compromised function if updating the lockfile took too much time', (next) => {
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.utimes = function (path, atime, mtime, callback) {
             setTimeout(() => {
@@ -408,7 +407,7 @@ describe('.lock()', () => {
     });
 
     it('should call the compromised function if lock was acquired by someone else due to staleness', (next) => {
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.utimes = function (path, atime, mtime, callback) {
             setTimeout(() => {
@@ -574,7 +573,7 @@ describe('.unlock()', () => {
     });
 
     it('should fail if removing the lockfile errors out', (next) => {
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.rmdir = function (path, callback) {
             callback(new Error('foo'));
@@ -593,7 +592,7 @@ describe('.unlock()', () => {
     });
 
     it('should ignore ENOENT errors when removing the lockfile', (next) => {
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
         let called;
 
         customFs.rmdir = function (path, callback) {
@@ -628,7 +627,7 @@ describe('.unlock()', () => {
     });
 
     it('should stop updating the lockfile mtime (slow fs)', (next) => {
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.utimes = function (path, atime, mtime, callback) {
             setTimeout(fs.utimes.bind(fs, path, atime, mtime, callback), 2000);
@@ -648,7 +647,7 @@ describe('.unlock()', () => {
     });
 
     it('should stop updating the lockfile mtime (slow fs + new lock)', (next) => {
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.utimes = function (path, atime, mtime, callback) {
             setTimeout(fs.utimes.bind(fs, path, atime, mtime, callback), 2000);
@@ -688,7 +687,7 @@ describe('.unlock()', () => {
     });
 
     it('should use the custom fs', (next) => {
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.realpath = function (path, callback) {
             customFs.realpath = fs.realpath;
@@ -750,7 +749,7 @@ describe('.check()', () => {
     });
 
     it('should use the custom fs', (next) => {
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.realpath = function (path, callback) {
             customFs.realpath = fs.realpath;
@@ -808,7 +807,7 @@ describe('.check()', () => {
 
     it('should fail if stating the lockfile errors out when verifying staleness', (next) => {
         const mtime = (Date.now() - 60000) / 1000;
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
 
         customFs.stat = function (path, callback) {
             callback(new Error('foo'));
@@ -1056,7 +1055,7 @@ describe('sync api', () => {
     });
 
     it('should use a custom fs', () => {
-        const customFs = extend({}, fs);
+        const customFs = Object.assign({}, fs);
         let called;
 
         customFs.realpathSync = function () {
