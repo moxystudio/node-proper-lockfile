@@ -40,10 +40,6 @@ function master() {
     setTimeout(() => {
         cluster.removeAllListeners('exit');
 
-        Object.keys(cluster.workers).forEach((id) => {
-            cluster.workers[id].removeAllListeners('message').kill();
-        });
-
         cluster.disconnect(() => {
             // Parse & sort logs
             logs = logs.map((log) => {
@@ -102,6 +98,8 @@ function master() {
 }
 
 function slave() {
+    process.on('disconnect', () => process.exit(0));
+
     const tryLock = () => {
         setTimeout(() => {
             process.send(`${Date.now()} LOCK_TRY\n`);

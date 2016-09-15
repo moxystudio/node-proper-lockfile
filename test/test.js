@@ -1105,7 +1105,7 @@ describe('misc', () => {
                 if (process.env.TRAVIS) {
                     process.stdout.write(stdout);
                 } else {
-                    fs.writeFileSync(`${__dirname}/stress.log`, stdout);
+                    fs.writeFileSync(`${__dirname}/stress.log`, stdout || '');
                 }
 
                 return next(err);
