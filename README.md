@@ -84,7 +84,7 @@ const lockfile = require('proper-lockfile');
 
 lockfile.lock('some/file', (err) => {
     if (err) {
-        throw err;      // Lock failed
+        throw err;  // Lock failed
     }
 
     // Do something while the file is locked
@@ -96,8 +96,10 @@ lockfile.lock('some/file', (err) => {
     // Though it's not mandatory since it will eventually stale
     /*release(function (err) {
         // At this point the lock was effectively released or an error
-        // ocurred while removing it
-        if (err) throw err;
+        // occurred while removing it
+        if (err) {
+            throw err;
+        }
     });*/
 });
 ```
@@ -131,8 +133,10 @@ lockfile.lock('some/file', (err) => {
     // or..
     /*lockfile.unlock('some/file', function (err) {
         // At this point the lock was effectively released or an error
-        // ocurred while removing it
-        if (err) throw err;
+        // occurred while removing it
+        if (err) {
+            throw err;
+        }
     });*/
 });
 ```
