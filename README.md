@@ -160,7 +160,7 @@ lockfile.check('some/file', (err, isLocked) => {
         throw err;
     }
 
-    // isLocked will be true if 'some/file' is locked, otherwise will be false if not locked
+    // isLocked will be true if 'some/file' is locked, false otherwise
 });
 ```
 
