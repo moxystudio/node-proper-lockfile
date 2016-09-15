@@ -80,10 +80,12 @@ Available options:
 
 
 ```js
-var lockfile = require('proper-lockfile');
+const lockfile = require('proper-lockfile');
 
-lockfile.lock('some/file', function (err, release) {
-    if (err) throw err;      // Lock failed
+lockfile.lock('some/file', (err) => {
+    if (err) {
+        throw err;      // Lock failed
+    }
 
     // Do something while the file is locked
 
@@ -109,7 +111,6 @@ Whenever possible you should use the `release` function instead (as exemplified 
 
 The `callback` is optional because even if the removal of the lock failed, the lockfile's `mtime` will no longer be updated causing it to eventually stale.
 
-
 Available options:
 
 - `realpath`: Resolve symlinks using realpath, defaults to `true` (note that if `true`, the `file` must exist previously)
@@ -117,10 +118,12 @@ Available options:
 
 
 ```js
-var lockfile = require('proper-lockfile');
+const lockfile = require('proper-lockfile');
 
-lockfile.lock('some/file', function (err) {
-    if (err) throw err;
+lockfile.lock('some/file', (err) => {
+    if (err) {
+        throw err;
+    }
 
     // Later..
     lockfile.unlock('some/file');
@@ -137,18 +140,21 @@ lockfile.lock('some/file', function (err) {
 ### .check(file, [options], callback)
 
 Check if the file is locked and its lockfile is not stale. Callback is called with callback(error, isLocked).
-   
+
 Available options:
 
 - `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (minimum value is `5000`)
 - `realpath`: Resolve symlinks using realpath, defaults to `true` (note that if `true`, the `file` must exist previously)
 - `fs`: A custom fs to use, defaults to `graceful-fs`
 
-```js
-var lockfile = require('proper-lockfile');
 
-lockfile.check('some/file', function (err, isLocked) {
-    if (err) throw err;
+```js
+const lockfile = require('proper-lockfile');
+
+lockfile.check('some/file', (err, isLocked) => {
+    if (err) {
+        throw err;
+    }
 
     // isLocked will be true if 'some/file' is locked, otherwise will be false if not locked
 });
@@ -177,16 +183,13 @@ Returns a boolean or throws on error.
 are handled differently by `nodejs` in the sense that they do not fire a `exit` event on the `process`.
 To avoid this common issue that `CLI` developers have, please do the following:
 
+
 ```js
 // Map SIGINT & SIGTERM to process exit
 // so that lockfile removes the lockfile automatically
 process
-.once('SIGINT', function () {
-    process.exit(1);
-})
-.once('SIGTERM', function () {
-    process.exit(1);
-});
+.once('SIGINT', () => process.exit(1))
+.once('SIGTERM', () => process.exit(1));
 ```
 
 
