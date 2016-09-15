@@ -94,7 +94,7 @@ lockfile.lock('some/file', (err) => {
 
     // Note that you can optionally handle release errors
     // Though it's not mandatory since it will eventually stale
-    /*release(function (err) {
+    /*release((err) => {
         // At this point the lock was effectively released or an error
         // occurred while removing it
         if (err) {
@@ -131,7 +131,7 @@ lockfile.lock('some/file', (err) => {
     lockfile.unlock('some/file');
 
     // or..
-    /*lockfile.unlock('some/file', function (err) {
+    /*lockfile.unlock('some/file', (err) => {
         // At this point the lock was effectively released or an error
         // occurred while removing it
         if (err) {
