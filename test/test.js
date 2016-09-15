@@ -1101,10 +1101,12 @@ describe('misc', () => {
 
         spawn('node', [`${__dirname}/fixtures/stress.js`], (err, stdout) => {
             if (err) {
+                stdout = stdout || '';
+
                 if (process.env.TRAVIS) {
                     process.stdout.write(stdout);
                 } else {
-                    fs.writeFileSync(`${__dirname}/stress.log`, stdout || '');
+                    fs.writeFileSync(`${__dirname}/stress.log`, stdout);
                 }
 
                 return next(err);
