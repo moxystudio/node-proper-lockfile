@@ -82,7 +82,7 @@ Available options:
 ```js
 const lockfile = require('proper-lockfile');
 
-lockfile.lock('some/file', (err) => {
+lockfile.lock('some/file', (err, release) => {
     if (err) {
         throw err;  // Lock failed
     }
