@@ -14,7 +14,7 @@
 [david-dm-dev-url]:https://david-dm.org/IndigoUnited/node-proper-lockfile#info=devDependencies
 [david-dm-dev-image]:https://img.shields.io/david/dev/IndigoUnited/node-proper-lockfile.svg
 
-A inter-process and inter-machine lockfile utility that works on a local or network file system.
+An inter-process and inter-machine lockfile utility that works on a local or network file system.
 
 
 ## Installation
