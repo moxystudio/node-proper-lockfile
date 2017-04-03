@@ -43,7 +43,7 @@
     "istanbul": "^0.4.1",
     "mocha": "^3.0.2",
     "rimraf": "^2.5.0",
-    "stable": "^0.1.5"
+    "stable": "^0.1.6"
   },
   "engines": {
     "node": ">=4.0.0"
