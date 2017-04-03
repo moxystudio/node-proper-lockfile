@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@satazor/eslint-config": "^3.1.1",
-    "async": "^2.0.0",
+    "async": "^2.3.0",
     "buffered-spawn": "^3.0.0",
     "coveralls": "^2.11.6",
     "eslint": "^3.5.0",
