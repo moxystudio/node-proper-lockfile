@@ -86,7 +86,7 @@ function updateLock(file, options) {
     const lock = locks[file];
 
     /* istanbul ignore next */
-    if (lock.updateTimeout != null) {
+    if (lock.updateTimeout) {
         return;
     }
 
@@ -135,7 +135,13 @@ threshold'), { code: 'ECOMPROMISED' }));
     // Unref the timer so that the nodejs process can exit freely
     // This is safe because all acquired locks will be automatically released
     // on process exit
-    if (lock.updateTimeout.unref) lock.updateTimeout.unref();
+
+    // We first check that `lock.updateTimeout.unref` exists because some users
+    // may be using this module outside of NodeJS (e.g., in an electron app), 
+    // and in those cases `setTimeout` return an integer.
+    if (lock.updateTimeout.unref) {
+        lock.updateTimeout.unref();
+    }
 }
 
 function compromisedLock(file, lock, err) {
