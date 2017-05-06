@@ -11,7 +11,7 @@
 [coveralls-image]:https://img.shields.io/coveralls/IndigoUnited/node-proper-lockfile/master.svg
 [david-dm-url]:https://david-dm.org/IndigoUnited/node-proper-lockfile
 [david-dm-image]:https://img.shields.io/david/IndigoUnited/node-proper-lockfile.svg
-[david-dm-dev-url]:https://david-dm.org/IndigoUnited/node-proper-lockfile#info=devDependencies
+[david-dm-dev-url]:https://david-dm.org/IndigoUnited/node-proper-lockfile?type=dev
 [david-dm-dev-image]:https://img.shields.io/david/dev/IndigoUnited/node-proper-lockfile.svg
 
 An inter-process and inter-machine lockfile utility that works on a local or network file system.
