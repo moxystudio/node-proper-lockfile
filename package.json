@@ -36,7 +36,7 @@
     "@satazor/eslint-config": "^3.1.1",
     "async": "^2.0.0",
     "buffered-spawn": "^3.0.0",
-    "coveralls": "^2.11.6",
+    "coveralls": "^3.0.0",
     "eslint": "^3.5.0",
     "expect.js": "^0.3.1",
     "istanbul": "^0.4.1",
