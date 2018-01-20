@@ -56,6 +56,7 @@
     "delay": "^2.0.0",
     "eslint": "^4.3.0",
     "eslint-config-moxy": "^4.1.0",
+    "execa": "^0.9.0",
     "husky": "^0.14.3",
     "jest": "^22.0.0",
     "lint-staged": "^6.0.0",
