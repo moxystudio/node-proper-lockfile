@@ -11,8 +11,5 @@ insert_final_newline = true
 [*.md]
 trim_trailing_whitespace = false
 
-[*.log]
-insert_final_newline = false
-
 [package.json]
 indent_size = 2

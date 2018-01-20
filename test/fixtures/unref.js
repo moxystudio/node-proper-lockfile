@@ -3,12 +3,8 @@
 const fs = require('fs');
 const lockfile = require('../../');
 
-const file = `${__dirname}/../tmp`;
+const tmpDir = `${__dirname}/../tmp`;
 
-fs.writeFileSync(file, '');
+fs.writeFileSync(`${tmpDir}/foo`, '');
 
-lockfile.lock(file, (err) => {
-    if (err) {
-        throw err;
-    }
-});
+lockfile.lockSync(`${tmpDir}/foo`);

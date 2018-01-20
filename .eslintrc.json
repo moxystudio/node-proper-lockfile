@@ -1,8 +1,9 @@
 {
     "root": true,
     "extends": [
-        "@satazor/eslint-config/es6",
-        "@satazor/eslint-config/addons/node",
-        "@satazor/eslint-config/addons/node-v4-es6"
+        "eslint-config-moxy/es8",
+        "eslint-config-moxy/addons/node",
+        "eslint-config-moxy/addons/object-spread",
+        "eslint-config-moxy/addons/jest"
     ]
 }
