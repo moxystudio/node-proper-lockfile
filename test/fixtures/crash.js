@@ -1,16 +1,12 @@
 'use strict';
 
 const fs = require('fs');
-const lockfile = require('../../');
+const lockfile = require('../..');
 
-const file = `${__dirname}/../tmp`;
+const tmpDir = `${__dirname}/../tmp`;
 
-fs.writeFileSync(file, '');
+fs.writeFileSync(`${tmpDir}/foo`, '');
 
-lockfile.lock(file, (err) => {
-    if (err) {
-        process.exit(25);
-    }
+lockfile.lockSync(`${tmpDir}/foo`);
 
-    throw new Error('crash');
-});
+throw new Error('intencional crash');

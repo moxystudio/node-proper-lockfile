@@ -1,50 +1,68 @@
 {
   "name": "proper-lockfile",
   "version": "2.0.1",
-  "description": "A inter-process and inter-machine lockfile utility that works on a local or network file system.",
-  "main": "index.js",
-  "scripts": {
-    "lint": "eslint '{*.js,lib/**/*.js,test/**/*.js}' --ignore-pattern=test/coverage",
-    "test": "mocha",
-    "test-cov": "istanbul cover --dir test/coverage _mocha && echo open test/coverage/lcov-report/index.html",
-    "test-travis": "istanbul cover _mocha --report lcovonly && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
-  },
-  "bugs": {
-    "url": "https://github.com/IndigoUnited/node-proper-lockfile/issues/"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/IndigoUnited/node-proper-lockfile.git"
-  },
+  "description": "A inter-process and inter-machine lockfile utility that works on a local or network file system",
   "keywords": [
     "lock",
     "locking",
     "file",
     "lockfile",
     "fs",
-    "rename",
-    "cross",
-    "machine"
+    "cross-process"
   ],
-  "author": "IndigoUnited <hello@indigounited.com> (http://indigounited.com)",
+  "author": "André Cruz <andre@moxy.studio>",
+  "homepage": "https://github.com/moxystudio/node-promptly",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:moxystudio/node-promptly.git"
+  },
   "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "test": "jest --env node --coverage --runInBand",
+    "prerelease": "npm t && npm run lint",
+    "release": "standard-version",
+    "precommit": "lint-staged",
+    "commitmsg": "commitlint -e $GIT_PARAMS"
+  },
+  "standard-version": {
+    "scripts": {
+      "posttag": "git push --follow-tags origin master && npm publish"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
   "dependencies": {
-    "graceful-fs": "^4.1.2",
-    "retry": "^0.10.0"
+    "graceful-fs": "^4.1.11",
+    "retry": "^0.10.1"
   },
   "devDependencies": {
-    "@satazor/eslint-config": "^3.1.1",
-    "async": "^2.0.0",
-    "buffered-spawn": "^3.0.0",
-    "coveralls": "^2.11.6",
-    "eslint": "^3.5.0",
-    "expect.js": "^0.3.1",
-    "istanbul": "^0.4.1",
-    "mocha": "^3.0.2",
-    "rimraf": "^2.5.0",
-    "stable": "^0.1.5"
-  },
-  "engines": {
-    "node": ">=4.0.0"
+    "@commitlint/cli": "^6.0.0",
+    "@commitlint/config-conventional": "^6.0.2",
+    "@segment/clear-timeouts": "^2.0.0",
+    "delay": "^2.0.0",
+    "eslint": "^4.3.0",
+    "eslint-config-moxy": "^4.1.0",
+    "husky": "^0.14.3",
+    "jest": "^22.0.0",
+    "lint-staged": "^6.0.0",
+    "mkdirp": "^0.5.1",
+    "p-defer": "^1.0.0",
+    "rimraf": "^2.6.2",
+    "stable": "^0.1.6",
+    "standard-version": "^4.2.0"
   }
 }

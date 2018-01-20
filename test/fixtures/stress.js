@@ -3,135 +3,145 @@
 const cluster = require('cluster');
 const fs = require('fs');
 const os = require('os');
-const rimraf = require('rimraf');
+const pDelay = require('delay');
 const sort = require('stable');
 const lockfile = require('../../');
 
-const file = `${__dirname}/../tmp`;
+const tmpDir = `${__dirname}/../tmp`;
+
+const maxTryDelay = 50;
+const maxLockTime = 200;
+const totalTestTime = 60000;
 
 function printExcerpt(logs, index) {
-    logs.slice(Math.max(0, index - 50), index + 50).forEach((log, index) => {
-        process.stdout.write(`${index + 1} ${log.timestamp} ${log.message}\n`);
-    });
+    const startIndex = Math.max(0, index - 50);
+    const endIndex = index + 50;
+
+    logs
+    .slice(startIndex, endIndex)
+    .forEach((log, index) => process.stdout.write(`${startIndex + index + 1} ${log.timestamp} ${log.message}\n`));
 }
 
-function master() {
+async function master() {
     const numCPUs = os.cpus().length;
     let logs = [];
-    let acquired;
 
-    fs.writeFileSync(file, '');
-    rimraf.sync(`${file}.lock`);
+    fs.writeFileSync(`${tmpDir}/foo`, '');
 
     for (let i = 0; i < numCPUs; i += 1) {
         cluster.fork();
     }
 
-    cluster.on('online', (worker) => {
-        worker.on('message', (data) => {
-            logs.push(data.toString().trim());
-        });
-    });
+    cluster.on('online', (worker) =>
+        worker.on('message', (data) =>
+            logs.push(data.toString().trim())));
 
     cluster.on('exit', () => {
         throw new Error('Child died prematurely');
     });
 
-    setTimeout(() => {
-        cluster.removeAllListeners('exit');
+    await pDelay(totalTestTime);
 
-        cluster.disconnect(() => {
-            // Parse & sort logs
-            logs = logs.map((log) => {
-                const split = log.split(' ');
+    cluster.removeAllListeners('exit');
 
-                return { timestamp: Number(split[0]), message: split[1] };
-            });
+    cluster.disconnect(() => {
+        let acquired;
 
-            logs = sort(logs, (log1, log2) => {
-                if (log1.timestamp > log2.timestamp) {
-                    return 1;
-                }
-                if (log1.timestamp < log2.timestamp) {
-                    return -1;
-                }
-                if (log1.message === 'LOCK_RELEASED') {
-                    return -1;
-                }
-                if (log2.message === 'LOCK_RELEASED') {
-                    return 1;
-                }
+        // Parse & sort logs
+        logs = logs.map((log) => {
+            const split = log.split(' ');
 
-                return 0;
-            });
-
-            // Validate logs
-            logs.forEach((log, index) => {
-                switch (log.message) {
-                case 'LOCK_ACQUIRED':
-                    if (acquired) {
-                        process.stdout.write(`\nInconsistent at line ${index + 1}\n`);
-                        printExcerpt(logs, index);
-
-                        process.exit(1);
-                    }
-
-                    acquired = true;
-                    break;
-                case 'LOCK_RELEASED':
-                    if (!acquired) {
-                        process.stdout.write(`\nInconsistent at line ${index + 1}\n`);
-                        printExcerpt(logs, index);
-                        process.exit(1);
-                    }
-
-                    acquired = false;
-                    break;
-                default:
-                    // do nothing
-                }
-            });
-
-            process.exit(0);
+            return { timestamp: Number(split[0]), message: split[1] };
         });
-    }, 60000);
+
+        logs = sort(logs, (log1, log2) => {
+            if (log1.timestamp > log2.timestamp) {
+                return 1;
+            }
+            if (log1.timestamp < log2.timestamp) {
+                return -1;
+            }
+            if (log1.message === 'LOCK_RELEASE_CALL') {
+                return -1;
+            }
+            if (log2.message === 'LOCK_RELEASE_CALL') {
+                return 1;
+            }
+
+            return 0;
+        });
+
+        // Validate logs
+        logs.forEach((log, index) => {
+            switch (log.message) {
+            case 'LOCK_ACQUIRED':
+                if (acquired) {
+                    process.stdout.write(`\nInconsistent at line ${index + 1}\n`);
+                    printExcerpt(logs, index);
+                    process.exit(1);
+                }
+
+                acquired = true;
+                break;
+            case 'LOCK_RELEASE_CALL':
+                if (!acquired) {
+                    process.stdout.write(`\nInconsistent at line ${index + 1}\n`);
+                    printExcerpt(logs, index);
+                    process.exit(1);
+                }
+
+                acquired = false;
+                break;
+            default:
+                // Do nothing
+            }
+        });
+
+        process.exit(0);
+    });
 }
 
-function slave() {
+function worker() {
     process.on('disconnect', () => process.exit(0));
 
-    const tryLock = () => {
-        setTimeout(() => {
-            process.send(`${Date.now()} LOCK_TRY\n`);
+    const tryLock = async () => {
+        await pDelay(Math.random() * maxTryDelay);
 
-            lockfile.lock(file, (err, unlock) => {
-                if (err) {
-                    process.send(`${Date.now()} LOCK_BUSY\n`);
-                    return tryLock();
-                }
+        process.send(`${Date.now()} LOCK_TRY\n`);
 
-                process.send(`${Date.now()} LOCK_ACQUIRED\n`);
+        let release;
 
-                setTimeout(() => {
-                    process.send(`${Date.now()} LOCK_RELEASED\n`);
+        try {
+            release = await lockfile.lock(`${tmpDir}/foo`);
+        } catch (err) {
+            process.send(`${Date.now()} LOCK_BUSY\n`);
+            tryLock();
 
-                    unlock((err) => {
-                        if (err) {
-                            throw err;
-                        }
+            return;
+        }
 
-                        tryLock();
-                    });
-                }, Math.random() * 200);
-            });
-        }, Math.random() * 100);
+        process.send(`${Date.now()} LOCK_ACQUIRED\n`);
+
+        await pDelay(Math.random() * maxLockTime);
+
+        process.send(`${Date.now()} LOCK_RELEASE_CALL\n`);
+
+        await release();
+
+        tryLock();
     };
 
     tryLock();
 }
 
+// Any unhandled promise should cause the process to exit
+process.on('unhandledRejection', (err) => {
+    console.error(err.stack);
+    process.exit(1);
+});
+
 if (cluster.isMaster) {
     master();
 } else {
-    slave();
+    worker();
 }

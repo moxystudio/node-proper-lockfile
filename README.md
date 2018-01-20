@@ -1,19 +1,19 @@
 # proper-lockfile
 
-[![NPM version][npm-image]][npm-url] [![Downloads][downloads-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Coverage Status][coveralls-image]][coveralls-url] [![Dependency status][david-dm-image]][david-dm-url] [![Dev Dependency status][david-dm-dev-image]][david-dm-dev-url] [![Greenkeeper badge][greenkeeper-image]][greenkeeper-url]
+[![NPM version][npm-image]][npm-url] [![Downloads][downloads-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Coverage Status][codecov-image]][codecov-url] [![Dependency status][david-dm-image]][david-dm-url] [![Dev Dependency status][david-dm-dev-image]][david-dm-dev-url] [![Greenkeeper badge][greenkeeper-image]][greenkeeper-url]
 
 [npm-url]:https://npmjs.org/package/proper-lockfile
 [downloads-image]:http://img.shields.io/npm/dm/proper-lockfile.svg
 [npm-image]:http://img.shields.io/npm/v/proper-lockfile.svg
-[travis-url]:https://travis-ci.org/IndigoUnited/node-proper-lockfile
-[travis-image]:http://img.shields.io/travis/IndigoUnited/node-proper-lockfile/master.svg
-[coveralls-url]:https://coveralls.io/r/IndigoUnited/node-proper-lockfile
-[coveralls-image]:https://img.shields.io/coveralls/IndigoUnited/node-proper-lockfile/master.svg
-[david-dm-url]:https://david-dm.org/IndigoUnited/node-proper-lockfile
-[david-dm-image]:https://img.shields.io/david/IndigoUnited/node-proper-lockfile.svg
-[david-dm-dev-url]:https://david-dm.org/IndigoUnited/node-proper-lockfile?type=dev
-[david-dm-dev-image]:https://img.shields.io/david/dev/IndigoUnited/node-proper-lockfile.svg
-[greenkeeper-image]:https://badges.greenkeeper.io/IndigoUnited/node-proper-lockfile.svg
+[travis-url]:https://travis-ci.org/moxystudio/node-proper-lockfile
+[travis-image]:http://img.shields.io/travis/moxystudio/node-proper-lockfile/master.svg
+[codecov-url]:https://codecov.io/gh/moxystudio/node-proper-lockfile
+[codecov-image]:https://img.shields.io/codecov/c/github/moxystudio/node-proper-lockfile/master.svg
+[david-dm-url]:https://david-dm.org/moxystudio/node-proper-lockfile
+[david-dm-image]:https://img.shields.io/david/moxystudio/node-proper-lockfile.svg
+[david-dm-dev-url]:https://david-dm.org/moxystudio/node-proper-lockfile?type=dev
+[david-dm-dev-image]:https://img.shields.io/david/dev/moxystudio/node-proper-lockfile.svg
+[greenkeeper-image]:https://badges.greenkeeper.io/moxystudio/node-proper-lockfile.svg
 [greenkeeper-url]:https://greenkeeper.io/
 
 An inter-process and inter-machine lockfile utility that works on a local or network file system.
@@ -65,12 +65,11 @@ As you see, the first two are a consequence of bad usage. Technically, it was po
 
 ## Usage
 
-### .lock(file, [options], [compromised], callback)
+### .lock(file, [options])
 
 Tries to acquire a lock on `file`.
 
-If the lock succeeds, a `release` function is provided that should be called when you want to release the lock.   
-If the lock gets compromised, the `compromised` function will be called. The default `compromised` function is a simple `throw err` which will probably cause the process to die. Specify it to handle the way you desire.
+If the lock succeeds, a `release` function is provided that should be called when you want to release the lock.
 
 Available options:
 
@@ -79,41 +78,28 @@ Available options:
 - `retries`: The number of retries or a [retry](https://www.npmjs.org/package/retry) options object, defaults to `0`
 - `realpath`: Resolve symlinks using realpath, defaults to `true` (note that if `true`, the `file` must exist previously)
 - `fs`: A custom fs to use, defaults to `graceful-fs`
+- `onCompromised`: Called if the lock gets compromised, defaults to a function that simply throws the error which will probably cause the process to die
 
 
 ```js
 const lockfile = require('proper-lockfile');
 
-lockfile.lock('some/file', (err, release) => {
-    if (err) {
-        throw err;  // Lock failed
-    }
-
+lockfile.lock('some/file')
+.then((release) => {
     // Do something while the file is locked
 
-    // Call the provided release function when you're done
-    release();
-
-    // Note that you can optionally handle release errors
-    // Though it's not mandatory since it will eventually stale
-    /*release((err) => {
-        // At this point the lock was effectively released or an error
-        // occurred while removing it
-        if (err) {
-            throw err;
-        }
-    });*/
+    // Call the provided release function when you're done,
+    // which will also return a promise
+    return release();
 });
 ```
 
 
-### .unlock(file, [options], [callback])
+### .unlock(file, [options])
 
 Releases a previously acquired lock on `file`.
 
 Whenever possible you should use the `release` function instead (as exemplified above). Still there are cases in which its hard to keep a reference to it around code. In those cases `unlock()` might be handy.
-
-The `callback` is optional because even if the removal of the lock failed, the lockfile's `mtime` will no longer be updated causing it to eventually stale.
 
 Available options:
 
@@ -124,28 +110,18 @@ Available options:
 ```js
 const lockfile = require('proper-lockfile');
 
-lockfile.lock('some/file', (err) => {
-    if (err) {
-        throw err;
-    }
+lockfile.lock('some/file')
+.then(() => {
+    // Do something while the file is locked
 
     // Later..
-    lockfile.unlock('some/file');
-
-    // or..
-    /*lockfile.unlock('some/file', (err) => {
-        // At this point the lock was effectively released or an error
-        // occurred while removing it
-        if (err) {
-            throw err;
-        }
-    });*/
+    return lockfile.unlock('some/file');
 });
 ```
 
-### .check(file, [options], callback)
+### .check(file, [options])
 
-Check if the file is locked and its lockfile is not stale. Callback is called with callback(error, isLocked).
+Check if the file is locked and its lockfile is not stale.
 
 Available options:
 
@@ -157,20 +133,16 @@ Available options:
 ```js
 const lockfile = require('proper-lockfile');
 
-lockfile.check('some/file', (err, isLocked) => {
-    if (err) {
-        throw err;
-    }
-
+lockfile.check('some/file')
+.then((isLocked) => {
     // isLocked will be true if 'some/file' is locked, false otherwise
 });
 ```
 
-### .lockSync(file, [options], [compromised])
+### .lockSync(file, [options])
 
 Sync version of `.lock()`.   
 Returns the `release` function or throws on error.
-
 
 ### .unlockSync(file, [options])
 
@@ -202,7 +174,7 @@ process
 ## Tests
 
 `$ npm test`   
-`$ npm test-cov` to get coverage report
+`$ npm test -- --watch` during development
 
 The test suite is very extensive. There's even a stress test to guarantee exclusiveness of locks.
 
