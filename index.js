@@ -31,6 +31,7 @@ function checkSync(file, options) {
     return toSync(lockfile.check)(file, toSyncOptions(options));
 }
 
+module.exports = lock;
 module.exports.lock = lock;
 module.exports.unlock = unlock;
 module.exports.lockSync = lockSync;

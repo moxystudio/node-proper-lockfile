@@ -92,6 +92,8 @@ lockfile.lock('some/file')
     // which will also return a promise
     return release();
 });
+
+// Alternatively, you may use lockfile(`some/file`) directly.
 ```
 
 

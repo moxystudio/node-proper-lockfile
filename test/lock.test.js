@@ -23,6 +23,10 @@ afterEach(async () => {
     rimraf.sync(`${tmpDir}/*`);
 });
 
+it('should be the default export', () => {
+    expect(lockfile).toBe(lockfile.lock);
+});
+
 it('should fail if the file does not exist by default', async () => {
     expect.assertions(1);
 
