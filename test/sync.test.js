@@ -61,6 +61,18 @@ describe('.lockSync()', () => {
             release();
         }).not.toThrow();
     });
+
+    it('should fail syncronously if release throws', () => {
+        fs.writeFileSync(`${tmpDir}/foo`, '');
+
+        expect.assertions(1);
+
+        const release = lockfile.lockSync(`${tmpDir}/foo`);
+
+        release();
+
+        expect(() => release()).toThrow('Lock is already released');
+    });
 });
 
 describe('.unlockSync()', () => {
