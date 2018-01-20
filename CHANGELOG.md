@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="3.0.1"></a>
+## [3.0.1](https://github.com/moxystudio/node-promptly/compare/v3.0.0...v3.0.1) (2018-01-20)
+
+
+### Bug Fixes
+
+* restore ability to use lockfile() directly ([0ef8fbc](https://github.com/moxystudio/node-promptly/commit/0ef8fbc))
+
+
+
 <a name="3.0.0"></a>
 # [3.0.0](https://github.com/moxystudio/node-promptly/compare/v2.0.1...v3.0.0) (2018-01-20)
 
