@@ -61,10 +61,10 @@ async function master() {
             if (log1.timestamp < log2.timestamp) {
                 return -1;
             }
-            if (log1.message === 'LOCK_RELEASE_CALL') {
+            if (log1.message === 'LOCK_RELEASE_CALLED') {
                 return -1;
             }
-            if (log2.message === 'LOCK_RELEASE_CALL') {
+            if (log2.message === 'LOCK_RELEASE_CALLED') {
                 return 1;
             }
 
@@ -83,7 +83,7 @@ async function master() {
 
                 acquired = true;
                 break;
-            case 'LOCK_RELEASE_CALL':
+            case 'LOCK_RELEASE_CALLED':
                 if (!acquired) {
                     process.stdout.write(`\nInconsistent at line ${index + 1}\n`);
                     printExcerpt(logs, index);
@@ -105,7 +105,7 @@ function worker() {
     process.on('disconnect', () => process.exit(0));
 
     const tryLock = async () => {
-        await pDelay(Math.random() * maxTryDelay);
+        await pDelay(Math.max(Math.random(), 10) * maxTryDelay);
 
         process.send(`${Date.now()} LOCK_TRY\n`);
 
@@ -122,9 +122,9 @@ function worker() {
 
         process.send(`${Date.now()} LOCK_ACQUIRED\n`);
 
-        await pDelay(Math.random() * maxLockTime);
+        await pDelay(Math.max(Math.random(), 10) * maxLockTime);
 
-        process.send(`${Date.now()} LOCK_RELEASE_CALL\n`);
+        process.send(`${Date.now()} LOCK_RELEASE_CALLED\n`);
 
         await release();
 
