@@ -9,6 +9,8 @@ const tmpDir = `${__dirname}/tmp`;
 
 beforeAll(() => mkdirp.sync(tmpDir));
 
+afterAll(() => rimraf.sync(tmpDir));
+
 afterEach(() => rimraf.sync(`${tmpDir}/*`));
 
 it('should always use `options.fs` when calling `fs` methods', () => {

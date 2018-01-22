@@ -14,9 +14,11 @@ clearTimeouts.install();
 
 beforeAll(() => mkdirp.sync(tmpDir));
 
-afterEach(clearTimeouts);
+afterAll(() => rimraf.sync(tmpDir));
 
 afterEach(async () => {
+    clearTimeouts();
+
     await unlockAll();
     rimraf.sync(`${tmpDir}/*`);
 });

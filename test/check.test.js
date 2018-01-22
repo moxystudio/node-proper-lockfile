@@ -11,6 +11,8 @@ const tmpDir = `${__dirname}/tmp`;
 
 beforeAll(() => mkdirp.sync(tmpDir));
 
+afterAll(() => rimraf.sync(tmpDir));
+
 afterEach(async () => {
     await unlockAll();
     rimraf.sync(`${tmpDir}/*`);
