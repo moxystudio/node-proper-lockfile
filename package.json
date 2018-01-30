@@ -11,10 +11,10 @@
     "cross-process"
   ],
   "author": "André Cruz <andre@moxy.studio>",
-  "homepage": "https://github.com/moxystudio/node-promptly",
+  "homepage": "https://github.com/moxystudio/node-proper-lockfile",
   "repository": {
     "type": "git",
-    "url": "git@github.com:moxystudio/node-promptly.git"
+    "url": "git@github.com:moxystudio/node-proper-lockfile.git"
   },
   "license": "MIT",
   "main": "index.js",
