@@ -93,7 +93,7 @@ lockfile.lock('some/file')
     return release();
 });
 
-// Alternatively, you may use lockfile(`some/file`) directly.
+// Alternatively, you may use lockfile('some/file') directly.
 ```
 
 
