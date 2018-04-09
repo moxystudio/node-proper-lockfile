@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "graceful-fs": "^4.1.11",
-    "retry": "^0.10.1"
+    "retry": "^0.12.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^6.0.0",
