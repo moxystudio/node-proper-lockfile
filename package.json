@@ -53,7 +53,7 @@
     "@commitlint/cli": "^6.0.0",
     "@commitlint/config-conventional": "^6.0.2",
     "@segment/clear-timeouts": "^2.0.0",
-    "delay": "^2.0.0",
+    "delay": "^3.0.0",
     "eslint": "^4.3.0",
     "eslint-config-moxy": "^5.0.0",
     "execa": "^0.9.0",
