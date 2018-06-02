@@ -50,7 +50,7 @@
     "retry": "^0.12.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^6.0.0",
+    "@commitlint/cli": "^7.0.0",
     "@commitlint/config-conventional": "^6.0.2",
     "@segment/clear-timeouts": "^2.0.0",
     "delay": "^2.0.0",
