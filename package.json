@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^6.0.0",
-    "@commitlint/config-conventional": "^6.0.2",
+    "@commitlint/config-conventional": "^7.0.0",
     "@segment/clear-timeouts": "^2.0.0",
     "delay": "^2.0.0",
     "eslint": "^4.3.0",
