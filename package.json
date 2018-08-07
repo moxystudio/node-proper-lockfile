@@ -50,20 +50,20 @@
     "retry": "^0.12.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^6.0.0",
-    "@commitlint/config-conventional": "^6.0.2",
+    "@commitlint/cli": "^7.0.0",
+    "@commitlint/config-conventional": "^7.0.1",
     "@segment/clear-timeouts": "^2.0.0",
-    "delay": "^2.0.0",
-    "eslint": "^4.3.0",
-    "eslint-config-moxy": "^5.0.0",
-    "execa": "^0.9.0",
+    "delay": "^3.0.0",
+    "eslint": "^5.3.0",
+    "eslint-config-moxy": "^6.0.1",
+    "execa": "^0.10.0",
     "husky": "^0.14.3",
-    "jest": "^22.0.0",
+    "jest": "^23.4.2",
     "lint-staged": "^7.0.0",
     "mkdirp": "^0.5.1",
     "p-defer": "^1.0.0",
     "rimraf": "^2.6.2",
-    "stable": "^0.1.6",
-    "standard-version": "^4.2.0"
+    "stable": "^0.1.8",
+    "standard-version": "^4.4.0"
   }
 }

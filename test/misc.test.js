@@ -36,7 +36,7 @@ it('should work on stress conditions', async () => {
     } catch (err) {
         const stdout = err.stdout || '';
 
-        if (process.env.TRAVIS) {
+        if (process.env.CI) {
             process.stdout.write(stdout);
         } else {
             fs.writeFileSync(`${__dirname}/stress.log`, stdout);
