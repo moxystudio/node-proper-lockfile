@@ -57,7 +57,7 @@
     "eslint": "^5.3.0",
     "eslint-config-moxy": "^6.0.1",
     "execa": "^0.10.0",
-    "husky": "^0.14.3",
+    "husky": "^1.0.0",
     "jest": "^23.4.2",
     "lint-staged": "^7.0.0",
     "mkdirp": "^0.5.1",
