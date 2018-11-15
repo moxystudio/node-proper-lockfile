@@ -159,18 +159,7 @@ Returns a boolean or throws on error.
 
 ## Graceful exit
 
-`proper-lockfile` automatically remove locks if the process exists. Though, `SIGINT` and `SIGTERM` signals
-are handled differently by `nodejs` in the sense that they do not fire a `exit` event on the `process`.
-To avoid this common issue that `CLI` developers have, please do the following:
-
-
-```js
-// Map SIGINT & SIGTERM to process exit
-// so that lockfile removes the lockfile automatically
-process
-.once('SIGINT', () => process.exit(1))
-.once('SIGTERM', () => process.exit(1));
-```
+`proper-lockfile` automatically remove locks if the process exists.
 
 
 ## Tests

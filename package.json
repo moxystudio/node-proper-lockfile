@@ -47,7 +47,8 @@
   },
   "dependencies": {
     "graceful-fs": "^4.1.11",
-    "retry": "^0.12.0"
+    "retry": "^0.12.0",
+    "signal-exit": "^3.0.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^7.0.0",
