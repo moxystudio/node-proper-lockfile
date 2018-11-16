@@ -79,6 +79,7 @@ Available options:
 - `realpath`: Resolve symlinks using realpath, defaults to `true` (note that if `true`, the `file` must exist previously)
 - `fs`: A custom fs to use, defaults to `graceful-fs`
 - `onCompromised`: Called if the lock gets compromised, defaults to a function that simply throws the error which will probably cause the process to die
+- `lockfilePath`: Custom lockfile path. Ex: If you want to lock a directory and create the lock file inside it, you can pass `file` as `<dir path>` and `options.lockfilePath` as `<dir path>/dir.lock`.
 
 
 ```js
