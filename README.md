@@ -46,6 +46,8 @@ This library is similar to [lockfile](https://github.com/isaacs/lockfile) but th
 
 - It does not check if the lockfile was compromised which can led to undesirable situations. `proper-lockfile` checks the lockfile when updating the `mtime`.
 
+- It has a default value of `0` for the stale option which isn't good because any crash or process kill that the package can't handle gracefully will leave the lock active forever.
+
 
 ### Compromised
 
@@ -160,7 +162,7 @@ Returns a boolean or throws on error.
 
 ## Graceful exit
 
-`proper-lockfile` automatically remove locks if the process exists.
+`proper-lockfile` automatically remove locks if the process exists, except if the process is killed with SIGKILL or it crashes due to a VM fatal error (e.g.: out of memory).
 
 
 ## Tests
