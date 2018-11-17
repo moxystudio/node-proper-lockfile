@@ -60,7 +60,7 @@
     "execa": "^0.10.0",
     "husky": "^0.14.3",
     "jest": "^23.4.2",
-    "lint-staged": "^7.0.0",
+    "lint-staged": "^8.0.5",
     "mkdirp": "^0.5.1",
     "p-defer": "^1.0.0",
     "rimraf": "^2.6.2",
