@@ -73,6 +73,14 @@ it('should create the lockfile', async () => {
     expect(fs.existsSync(`${tmpDir}/foo`)).toBe(true);
 });
 
+it('should create the lockfile inside a folder', async () => {
+    fs.mkdirSync(`${tmpDir}/foo-dir`);
+
+    await lockfile.lock(`${tmpDir}/foo-dir`, { lockfilePath: `${tmpDir}/foo-dir/dir.lock` });
+
+    expect(fs.existsSync(`${tmpDir}/foo-dir/dir.lock`)).toBe(true);
+});
+
 it('should fail if already locked', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 

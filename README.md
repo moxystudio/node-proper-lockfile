@@ -46,6 +46,8 @@ This library is similar to [lockfile](https://github.com/isaacs/lockfile) but th
 
 - It does not check if the lockfile was compromised which can led to undesirable situations. `proper-lockfile` checks the lockfile when updating the `mtime`.
 
+- It has a default value of `0` for the stale option which isn't good because any crash or process kill that the package can't handle gracefully will leave the lock active forever.
+
 
 ### Compromised
 
@@ -79,6 +81,7 @@ Available options:
 - `realpath`: Resolve symlinks using realpath, defaults to `true` (note that if `true`, the `file` must exist previously)
 - `fs`: A custom fs to use, defaults to `graceful-fs`
 - `onCompromised`: Called if the lock gets compromised, defaults to a function that simply throws the error which will probably cause the process to die
+- `lockfilePath`: Custom lockfile path. e.g.: If you want to lock a directory and create the lock file inside it, you can pass `file` as `<dir path>` and `options.lockfilePath` as `<dir path>/dir.lock`
 
 
 ```js
@@ -107,6 +110,7 @@ Available options:
 
 - `realpath`: Resolve symlinks using realpath, defaults to `true` (note that if `true`, the `file` must exist previously)
 - `fs`: A custom fs to use, defaults to `graceful-fs`
+- `lockfilePath`: Custom lockfile path. e.g.: If you want to lock a directory and create the lock file inside it, you can pass `file` as `<dir path>` and `options.lockfilePath` as `<dir path>/dir.lock`
 
 
 ```js
@@ -130,6 +134,7 @@ Available options:
 - `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (minimum value is `5000`)
 - `realpath`: Resolve symlinks using realpath, defaults to `true` (note that if `true`, the `file` must exist previously)
 - `fs`: A custom fs to use, defaults to `graceful-fs`
+- `lockfilePath`: Custom lockfile path. e.g.: If you want to lock a directory and create the lock file inside it, you can pass `file` as `<dir path>` and `options.lockfilePath` as `<dir path>/dir.lock`
 
 
 ```js
@@ -159,7 +164,7 @@ Returns a boolean or throws on error.
 
 ## Graceful exit
 
-`proper-lockfile` automatically remove locks if the process exists.
+`proper-lockfile` automatically remove locks if the process exists, except if the process is killed with SIGKILL or it crashes due to a VM fatal error (e.g.: out of memory).
 
 
 ## Tests
