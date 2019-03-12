@@ -63,7 +63,7 @@
     "eslint-config-moxy": "^6.0.1",
     "execa": "^1.0.0",
     "husky": "^1.1.4",
-    "jest": "^23.4.2",
+    "jest": "^24.5.0",
     "lint-staged": "^8.0.4",
     "mkdirp": "^0.5.1",
     "p-defer": "^1.0.0",

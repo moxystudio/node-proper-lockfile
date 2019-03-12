@@ -1,7 +1,6 @@
 language: node_js
 node_js:
-# nodejs 11.11.X was failing with this https://travis-ci.org/moxystudio/node-proper-lockfile/jobs/503161746#L469
-#   - "node"
+  - "node"
   - "lts/*"
 # Report coverage
 after_success:
