@@ -520,29 +520,3 @@ it('should not fail to update mtime when we are over the threshold but mtime is 
     }, 1000);
     await pDelay(5000);
 }, 16000);
-
-it('should fail to update mtime when forced over the threshold, first update ', async () => {
-    fs.writeFileSync(`${tmpDir}/foo`, '');
-    await lockfile.lock(`${tmpDir}/foo`, {
-        checkMtimeOwnership: false,
-        update: 1000,
-        stale: 2000,
-        onCompromised: (err) => expect(err).toBeInstanceOf(Error),
-    });
-    sleep(3000);
-    await pDelay(5000);
-}, 16000);
-
-it('should fail to update mtime when forced over the threshold, not first update ', async () => {
-    fs.writeFileSync(`${tmpDir}/foo`, '');
-    await lockfile.lock(`${tmpDir}/foo`, {
-        checkMtimeOwnership: false,
-        update: 1000,
-        stale: 2000,
-        onCompromised: (err) => expect(err).toBeInstanceOf(Error),
-    });
-    setTimeout(() => {
-        sleep(3000);
-    }, 1000);
-    await pDelay(5000);
-}, 16000);
