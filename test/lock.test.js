@@ -2,6 +2,7 @@
 
 const fs = require('graceful-fs');
 const mkdirp = require('mkdirp');
+const sleep = require('thread-sleep');
 const rimraf = require('rimraf');
 const execa = require('execa');
 const pDefer = require('p-defer');
@@ -183,12 +184,16 @@ it('should remove and acquire over stale locks', async () => {
 
 it('should retry if the lockfile was removed when verifying staleness', async () => {
     const mtime = (Date.now() - 60000) / 1000;
+    let count = 0;
     const customFs = {
         ...fs,
         mkdir: jest.fn((...args) => fs.mkdir(...args)),
         stat: jest.fn((...args) => {
-            rimraf.sync(`${tmpDir}/foo.lock`);
+            if (count % 2 === 0) {
+                rimraf.sync(`${tmpDir}/foo.lock`);
+            }
             fs.stat(...args);
+            count += 1;
         }),
     };
 
@@ -199,7 +204,7 @@ it('should retry if the lockfile was removed when verifying staleness', async ()
     await lockfile.lock(`${tmpDir}/foo`, { fs: customFs });
 
     expect(customFs.mkdir).toHaveBeenCalledTimes(2);
-    expect(customFs.stat).toHaveBeenCalledTimes(1);
+    expect(customFs.stat).toHaveBeenCalledTimes(2);
     expect(fs.statSync(`${tmpDir}/foo.lock`).mtime.getTime()).toBeGreaterThan(Date.now() - 3000);
 });
 
@@ -394,7 +399,7 @@ it('should call the compromised function if updating the lockfile took too much 
 
     const handleCompromised = (err) => {
         expect(err.code).toBe('ECOMPROMISED');
-        expect(err.message).toMatch('threshold');
+        expect(err.message).toMatch('foo');
 
         deferred.resolve();
     };
@@ -499,3 +504,19 @@ it('should set update to a maximum of stale / 2', async () => {
 
     expect(fs.statSync(`${tmpDir}/foo.lock`).mtime.getTime()).toBeGreaterThan(mtime);
 }, 10000);
+
+it('should not fail to update mtime when we are over the threshold but mtime is ours, first', async () => {
+    fs.writeFileSync(`${tmpDir}/foo`, '');
+    await lockfile.lock(`${tmpDir}/foo`, { update: 1000, stale: 2000 });
+    sleep(3000);
+    await pDelay(5000);
+}, 16000);
+
+it('should not fail to update mtime when we are over the threshold but mtime is ours, not first', async () => {
+    fs.writeFileSync(`${tmpDir}/foo`, '');
+    await lockfile.lock(`${tmpDir}/foo`, { update: 1000, stale: 2000 });
+    setTimeout(() => {
+        sleep(3000);
+    }, 1000);
+    await pDelay(5000);
+}, 16000);
