@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="4.0.0"></a>
+# [4.0.0](https://github.com/moxystudio/node-proper-lockfile/compare/v3.2.0...v4.0.0) (2019-03-12)
+
+
+### Bug Fixes
+
+* fix typo in error message ([#68](https://github.com/moxystudio/node-proper-lockfile/issues/68)) ([b91cb55](https://github.com/moxystudio/node-proper-lockfile/commit/b91cb55))
+
+
+### Features
+
+* make staleness check more robust ([#74](https://github.com/moxystudio/node-proper-lockfile/issues/74)) ([9cc0973](https://github.com/moxystudio/node-proper-lockfile/commit/9cc0973)), closes [#71](https://github.com/moxystudio/node-proper-lockfile/issues/71) [/github.com/ipfs/js-ipfs-repo/issues/188#issuecomment-468682971](https://github.com//github.com/ipfs/js-ipfs-repo/issues/188/issues/issuecomment-468682971)
+
+
+### BREAKING CHANGES
+
+* We were marking the lock as compromised when system went into sleep or if the event loop was busy taking too long to run the internals timers, Now we keep track of the mtime updated by the current process, and if we lose some cycles in the update process but recover and the mtime is still ours we do not mark the lock as compromised.
+
+
+
 <a name="3.2.0"></a>
 # [3.2.0](https://github.com/moxystudio/node-proper-lockfile/compare/v3.1.0...v3.2.0) (2018-11-19)
 
