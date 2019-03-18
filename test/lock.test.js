@@ -9,7 +9,6 @@ const pDefer = require('p-defer');
 const pDelay = require('delay');
 const clearTimeouts = require('@segment/clear-timeouts');
 const lockfile = require('../');
-const { lock, createMtimeChecker } = require('../lib/lockfile');
 const unlockAll = require('./util/unlockAll');
 
 const tmpDir = `${__dirname}/tmp`;
@@ -525,9 +524,6 @@ it('should not fail to update mtime when we are over the threshold but mtime is 
 it('should allow truncated second precision mtime', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
-    // Ensure we determine precision again, using custom "second precision" fs
-    lock.mtimeChecker = createMtimeChecker();
-
     const customFs = {
         ...fs,
         stat(path, cb) {
@@ -567,9 +563,6 @@ it('should allow truncated second precision mtime', async () => {
 
 it('should allow rounded second precision mtime', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
-
-    // Ensure we determine precision again, using custom "second precision" fs
-    lock.mtimeChecker = createMtimeChecker();
 
     const customFs = {
         ...fs,
