@@ -80,6 +80,7 @@ Available options:
 - `fs`: A custom fs to use, defaults to `graceful-fs`
 - `onCompromised`: Called if the lock gets compromised, defaults to a function that simply throws the error which will probably cause the process to die
 - `lockfilePath`: Custom lockfile path. e.g.: If you want to lock a directory and create the lock file inside it, you can pass `file` as `<dir path>` and `options.lockfilePath` as `<dir path>/dir.lock`
+- `allowSecondPrecision`: Allows second precision in `mtime` comparison. If using a file system that allows millisecond precision it's best to set this to `false`, defaults to `true`
 
 
 ```js
