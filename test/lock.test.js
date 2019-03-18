@@ -9,7 +9,7 @@ const pDefer = require('p-defer');
 const pDelay = require('delay');
 const clearTimeouts = require('@segment/clear-timeouts');
 const lockfile = require('../');
-const { setMtimePrecision } = require('../lib/lockfile');
+const { lock, createMtimeChecker } = require('../lib/lockfile');
 const unlockAll = require('./util/unlockAll');
 
 const tmpDir = `${__dirname}/tmp`;
@@ -526,7 +526,7 @@ it('should allow second precision mtime', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
     // Ensure we determine precision again, using custom "second precision" fs
-    setMtimePrecision(null);
+    lock.mtimeChecker = createMtimeChecker();
 
     const customFs = {
         ...fs,
