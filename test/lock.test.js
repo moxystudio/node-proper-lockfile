@@ -520,3 +520,75 @@ it('should not fail to update mtime when we are over the threshold but mtime is 
     }, 1000);
     await pDelay(5000);
 }, 16000);
+
+it('should allow second precision in mtime', async () => {
+    const customFs = {
+        ...fs,
+        stat(path, cb) {
+            fs.stat(path, (err, stat) => {
+                if (err) {
+                    return cb(err);
+                }
+
+                // Make second precision if not already
+                stat.mtime = new Date(Math.trunc(stat.mtime.getTime() / 1000) * 1000);
+                cb(null, stat);
+            });
+        },
+    };
+
+    const deferred = pDefer();
+
+    // Without allowing second precision, the mtime comparison will cause the
+    // lock to appear compromised.
+    const handleCompromised = (err) => {
+        clearTimeout(successTimeoutId);
+        deferred.reject(err);
+    };
+
+    await lockfile.lock(`${tmpDir}/foo`, {
+        fs: customFs,
+        update: 1000,
+        onCompromised: handleCompromised,
+    });
+
+    // First update is fine because we `stat` after we `mkdir`, it'll fail on
+    // the second update when we use `utimes` and do not `stat` for the `mtime`
+    const successTimeoutId = setTimeout(deferred.resolve, 3000);
+
+    await deferred.promise;
+});
+
+it('should not allow second precision in mtime if configured', async () => {
+    const customFs = {
+        ...fs,
+        stat(path, cb) {
+            fs.stat(path, (err, stat) => {
+                if (err) {
+                    return cb(err);
+                }
+
+                // Make second precision if not already
+                stat.mtime = new Date(Math.trunc(stat.mtime.getTime() / 1000) * 1000);
+                cb(null, stat);
+            });
+        },
+    };
+
+    const deferred = pDefer();
+
+    // We expect this test to fail at some point, because the mtime comparison
+    // will be comparing millisecond precision with second precision.
+    const handleCompromised = (err) => {
+        deferred.resolve(err);
+    };
+
+    await lockfile.lock(`${tmpDir}/foo`, {
+        fs: customFs,
+        update: 1000,
+        onCompromised: handleCompromised,
+        allowSecondPrecision: false,
+    });
+
+    await deferred.promise;
+});
