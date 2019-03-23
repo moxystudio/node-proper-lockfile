@@ -67,9 +67,9 @@ As you see, the first two are a consequence of bad usage. Technically, it was po
 
 ### .lock(file, [options])
 
-Tries to acquire a lock on `file` or rejects the promise by throwing on error.
+Tries to acquire a lock on `file` or rejects the promise on error.
 
-If the lock succeeds, a `release` function is provided that should be called when you want to release the lock. The `release` function also rejects the promise by throwing on error (e.g. when the lock was already compromised).
+If the lock succeeds, a `release` function is provided that should be called when you want to release the lock. The `release` function also rejects the promise on error (e.g. when the lock was already compromised).
 
 Available options:
 
@@ -105,7 +105,7 @@ lockfile.lock('some/file')
 
 ### .unlock(file, [options])
 
-Releases a previously acquired lock on `file` or rejects the promise by throwing on error.
+Releases a previously acquired lock on `file` or rejects the promise on error.
 
 Whenever possible you should use the `release` function instead (as exemplified above). Still there are cases in which its hard to keep a reference to it around code. In those cases `unlock()` might be handy.
 
@@ -130,7 +130,7 @@ lockfile.lock('some/file')
 
 ### .check(file, [options])
 
-Check if the file is locked and its lockfile is not stale, rejects the promise by throwing on error.
+Check if the file is locked and its lockfile is not stale, rejects the promise on error.
 
 Available options:
 
