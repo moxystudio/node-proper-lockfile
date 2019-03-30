@@ -426,7 +426,7 @@ it('should call the compromised function if lock was acquired by someone else du
 
     const handleCompromised = (err) => {
         expect(err.code).toBe('ECOMPROMISED');
-        expect(fs.existsSync(`${tmpDir}/foo.lock`)).toBe(true);
+        expect(fs.existsSync(`${tmpDir}/foo.lock`)).toBe(false);
 
         deferred.resolve();
     };

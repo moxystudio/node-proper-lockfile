@@ -74,6 +74,7 @@ If the lock succeeds, a `release` function is provided that should be called whe
 Available options:
 
 - `stale`: Duration in milliseconds in which the lock is considered stale, defaults to `10000` (minimum value is `5000`)
+- `strict`: Toggle strict mode. In non-strict mode a compromised lockfile will still be removed, also in strict mode calling release on a compromised lock will throw an error. Defaults to `false`
 - `update`: The interval in milliseconds in which the lockfile's `mtime` will be updated, defaults to `stale/2` (minimum value is `1000`, maximum value is `stale/2`)
 - `retries`: The number of retries or a [retry](https://www.npmjs.org/package/retry) options object, defaults to `0`
 - `realpath`: Resolve symlinks using realpath, defaults to `true` (note that if `true`, the `file` must exist previously)

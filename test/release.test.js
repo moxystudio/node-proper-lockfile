@@ -5,6 +5,7 @@ const mkdirp = require('mkdirp');
 const rimraf = require('rimraf');
 const lockfile = require('../');
 const unlockAll = require('./util/unlockAll');
+const { waitUntil } = require('./util/wait');
 
 const tmpDir = `${__dirname}/tmp`;
 
@@ -51,4 +52,60 @@ it('should fail when releasing twice', async () => {
     } catch (err) {
         expect(err.code).toBe('ERELEASED');
     }
+});
+
+it('shouldnt error on releasing compromised lock in non-strict mode', async () => {
+    const lockPath = `${tmpDir}/foo`;
+    const lockDir = `${lockPath}.lock`;
+    const stale = 10;
+    const onCompromised = jest.fn();
+
+    jest.useFakeTimers();
+    fs.writeFileSync(lockPath, '');
+
+    const release = await lockfile.lock(lockPath, { stale, onCompromised });
+    const mtime = (new Date().getTime() / 1000) - stale;
+
+    fs.utimesSync(lockDir, mtime, mtime);
+
+    // Advance timers to trigger the updateTimeout so the lock gets compromised
+    jest.advanceTimersByTime(stale * 2 * 1000);
+
+    // switch back to use realTimers to wait max 5 seconds as there is no
+    // other way to wait for all callbacks from the internal timeout to return
+    jest.useRealTimers();
+    await waitUntil(() => onCompromised.mock.calls.length, 5, 50);
+
+    expect(onCompromised).toHaveBeenCalledTimes(1);
+
+    await expect(release()).resolves.not.toThrow();
+    expect(fs.existsSync(lockDir)).toBe(false);
+});
+
+it('should error on releasing compromised lock in strict mode', async () => {
+    const lockPath = `${tmpDir}/foo`;
+    const lockDir = `${lockPath}.lock`;
+    const stale = 10;
+    const onCompromised = jest.fn();
+
+    jest.useFakeTimers();
+    fs.writeFileSync(lockPath, '');
+
+    const release = await lockfile.lock(lockPath, { strict: true, stale, onCompromised });
+    const mtime = (new Date().getTime() / 1000) - stale;
+
+    fs.utimesSync(lockDir, mtime, mtime);
+
+    // Advance timers to trigger the updateTimeout so the lock gets compromised
+    jest.advanceTimersByTime(stale * 2 * 1000);
+
+    // switch back to use realTimers to wait max 5 seconds as there is no
+    // other way to wait for all callbacks from the internal timeout to return
+    jest.useRealTimers();
+    await waitUntil(() => onCompromised.mock.calls.length, 5, 50);
+
+    expect(onCompromised).toHaveBeenCalledTimes(1);
+
+    await expect(release()).rejects.toThrow('Lock is already released');
+    expect(fs.existsSync(lockDir)).toBe(true);
 });
