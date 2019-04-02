@@ -37,7 +37,7 @@ describe('.lockSync()', () => {
         lockfile.lockSync(`${tmpDir}/foo`);
 
         expect(fs.existsSync(`${tmpDir}/foo.lock`)).toBe(true);
-        expect(() => lockfile.lockSync(`${tmpDir}/foo`)).toThrow(/already being hold/);
+        expect(() => lockfile.lockSync(`${tmpDir}/foo`)).toThrow(/already being held/);
     });
 
     it('should pass options correctly', () => {
