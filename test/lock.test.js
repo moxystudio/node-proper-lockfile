@@ -20,6 +20,7 @@ beforeAll(() => mkdirp.sync(tmpDir));
 afterAll(() => rimraf.sync(tmpDir));
 
 afterEach(async () => {
+    jest.restoreAllMocks();
     clearTimeouts();
 
     await unlockAll();
@@ -171,7 +172,7 @@ it('should not resolve symlinks if realpath is false', async () => {
 });
 
 it('should remove and acquire over stale locks', async () => {
-    const mtime = (Date.now() - 60000) / 1000;
+    const mtime = new Date(Date.now() - 60000);
 
     fs.writeFileSync(`${tmpDir}/foo`, '');
     fs.mkdirSync(`${tmpDir}/foo.lock`);
@@ -183,7 +184,7 @@ it('should remove and acquire over stale locks', async () => {
 });
 
 it('should retry if the lockfile was removed when verifying staleness', async () => {
-    const mtime = (Date.now() - 60000) / 1000;
+    const mtime = new Date(Date.now() - 60000);
     let count = 0;
     const customFs = {
         ...fs,
@@ -209,7 +210,7 @@ it('should retry if the lockfile was removed when verifying staleness', async ()
 });
 
 it('should retry if the lockfile was removed when verifying staleness (not recursively)', async () => {
-    const mtime = (Date.now() - 60000) / 1000;
+    const mtime = new Date(Date.now() - 60000);
     const customFs = {
         ...fs,
         mkdir: jest.fn((...args) => fs.mkdir(...args)),
@@ -232,7 +233,7 @@ it('should retry if the lockfile was removed when verifying staleness (not recur
 });
 
 it('should fail if stating the lockfile errors out when verifying staleness', async () => {
-    const mtime = (Date.now() - 60000) / 1000;
+    const mtime = new Date(Date.now() - 60000);
     const customFs = {
         ...fs,
         stat: (path, callback) => callback(new Error('foo')),
@@ -252,7 +253,7 @@ it('should fail if stating the lockfile errors out when verifying staleness', as
 });
 
 it('should fail if removing a stale lockfile errors out', async () => {
-    const mtime = (Date.now() - 60000) / 1000;
+    const mtime = new Date(Date.now() - 60000);
     const customFs = {
         ...fs,
         rmdir: (path, callback) => callback(new Error('foo')),
@@ -278,22 +279,22 @@ it('should fail if removing a stale lockfile errors out', async () => {
 it('should update the lockfile mtime automatically', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
-    await lockfile.lock(`${tmpDir}/foo`, { update: 1000 });
+    await lockfile.lock(`${tmpDir}/foo`, { update: 1500 });
 
     expect.assertions(2);
 
     let mtime = fs.statSync(`${tmpDir}/foo.lock`).mtime;
 
-    // First update occurs at 1000ms
-    await pDelay(1500);
+    // First update occurs at 1500ms
+    await pDelay(2000);
 
     let stat = fs.statSync(`${tmpDir}/foo.lock`);
 
     expect(stat.mtime.getTime()).toBeGreaterThan(mtime.getTime());
     mtime = stat.mtime;
 
-    // Second update occurs at 2000ms
-    await pDelay(1000);
+    // Second update occurs at 3000ms
+    await pDelay(2000);
 
     stat = fs.statSync(`${tmpDir}/foo.lock`);
 
@@ -360,13 +361,10 @@ it('should call the compromised function if ENOENT was detected when updating th
     await deferred.promise;
 });
 
-it('should call the compromised function if failed to update the lockfile mtime too many times', async () => {
+it('should call the compromised function if failed to update the lockfile mtime too many times (stat)', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
-    const customFs = {
-        ...fs,
-        utimes: (path, atime, mtime, callback) => callback(new Error('foo')),
-    };
+    const customFs = { ...fs };
 
     const deferred = pDefer();
 
@@ -383,6 +381,34 @@ it('should call the compromised function if failed to update the lockfile mtime 
         stale: 5000,
         onCompromised: handleCompromised,
     });
+
+    customFs.stat = (path, callback) => callback(new Error('foo'));
+
+    await deferred.promise;
+}, 10000);
+
+it('should call the compromised function if failed to update the lockfile mtime too many times (utimes)', async () => {
+    fs.writeFileSync(`${tmpDir}/foo`, '');
+
+    const customFs = { ...fs };
+
+    const deferred = pDefer();
+
+    const handleCompromised = (err) => {
+        expect(err.code).toBe('ECOMPROMISED');
+        expect(err.message).toMatch('foo');
+
+        deferred.resolve();
+    };
+
+    await lockfile.lock(`${tmpDir}/foo`, {
+        fs: customFs,
+        update: 1000,
+        stale: 5000,
+        onCompromised: handleCompromised,
+    });
+
+    customFs.utimes = (path, atime, mtime, callback) => callback(new Error('foo'));
 
     await deferred.promise;
 }, 10000);
@@ -390,10 +416,7 @@ it('should call the compromised function if failed to update the lockfile mtime 
 it('should call the compromised function if updating the lockfile took too much time', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
-    const customFs = {
-        ...fs,
-        utimes: (path, atime, mtime, callback) => setTimeout(() => callback(new Error('foo')), 6000),
-    };
+    const customFs = { ...fs };
 
     const deferred = pDefer();
 
@@ -411,16 +434,15 @@ it('should call the compromised function if updating the lockfile took too much 
         onCompromised: handleCompromised,
     });
 
+    customFs.utimes = (path, atime, mtime, callback) => setTimeout(() => callback(new Error('foo')), 6000);
+
     await deferred.promise;
 }, 10000);
 
 it('should call the compromised function if lock was acquired by someone else due to staleness', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
-    const customFs = {
-        ...fs,
-        utimes: (path, atime, mtime, callback) => setTimeout(() => callback(new Error('foo')), 6000),
-    };
+    const customFs = { ...fs };
 
     const deferred = pDefer();
 
@@ -434,13 +456,15 @@ it('should call the compromised function if lock was acquired by someone else du
     await lockfile.lock(`${tmpDir}/foo`, {
         fs: customFs,
         update: 1000,
-        stale: 5000,
+        stale: 3000,
         onCompromised: handleCompromised,
     });
 
-    await pDelay(5500);
+    customFs.utimes = (path, atime, mtime, callback) => setTimeout(() => callback(new Error('foo')), 6000);
 
-    await lockfile.lock(`${tmpDir}/foo`, { stale: 5000 });
+    await pDelay(4500);
+
+    await lockfile.lock(`${tmpDir}/foo`, { stale: 3000 });
 
     await deferred.promise;
 }, 10000);
@@ -505,23 +529,41 @@ it('should set update to a maximum of stale / 2', async () => {
     expect(fs.statSync(`${tmpDir}/foo.lock`).mtime.getTime()).toBeGreaterThan(mtime);
 }, 10000);
 
-it('should not fail to update mtime when we are over the threshold but mtime is ours, first', async () => {
+it('should not fail to update mtime when we are over the threshold but mtime is ours', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
     await lockfile.lock(`${tmpDir}/foo`, { update: 1000, stale: 2000 });
     sleep(3000);
     await pDelay(5000);
 }, 16000);
 
-it('should not fail to update mtime when we are over the threshold but mtime is ours, not first', async () => {
+it('should call the compromised function when we are over the threshold and mtime is not ours', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
-    await lockfile.lock(`${tmpDir}/foo`, { update: 1000, stale: 2000 });
-    setTimeout(() => {
-        sleep(3000);
-    }, 1000);
-    await pDelay(5000);
+
+    const deferred = pDefer();
+
+    const handleCompromised = (err) => {
+        expect(err.code).toBe('ECOMPROMISED');
+        expect(err.message).toMatch('Unable to update lock within the stale threshold');
+
+        deferred.resolve();
+    };
+
+    await lockfile.lock(`${tmpDir}/foo`, {
+        update: 1000,
+        stale: 2000,
+        onCompromised: handleCompromised,
+    });
+
+    const mtime = new Date(Date.now() - 60000);
+
+    fs.utimesSync(`${tmpDir}/foo.lock`, mtime, mtime);
+
+    sleep(3000);
+
+    await deferred.promise;
 }, 16000);
 
-it('should allow truncated second precision mtime', async () => {
+it('should allow millisecond precision mtime', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
     const customFs = {
@@ -532,36 +574,25 @@ it('should allow truncated second precision mtime', async () => {
                     return cb(err);
                 }
 
-                // Make second precision if not already
-                stat.mtime = new Date(Math.trunc(stat.mtime.getTime() / 1000) * 1000);
+                stat.mtime = new Date((Math.floor(stat.mtime.getTime() / 1000) * 1000) + 123);
                 cb(null, stat);
             });
         },
     };
 
-    const deferred = pDefer();
+    const dateNow = Date.now;
 
-    // If the module does not detect second precision for mtime, the mtime
-    // comparison will cause the lock to appear compromised.
-    const handleCompromised = (err) => {
-        clearTimeout(successTimeoutId);
-        deferred.reject(err);
-    };
+    jest.spyOn(Date, 'now').mockImplementation(() => (Math.floor(dateNow() / 1000) * 1000) + 123);
 
     await lockfile.lock(`${tmpDir}/foo`, {
         fs: customFs,
         update: 1000,
-        onCompromised: handleCompromised,
     });
 
-    // First update is fine because we `stat` after we `mkdir`, it'll fail on
-    // the second update when we use `utimes` and do not `stat` for the `mtime`
-    const successTimeoutId = setTimeout(deferred.resolve, 3000);
-
-    await deferred.promise;
+    await pDelay(3000);
 });
 
-it('should allow rounded second precision mtime', async () => {
+it('should allow floor\'ed second precision mtime', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
     const customFs = {
@@ -573,30 +604,42 @@ it('should allow rounded second precision mtime', async () => {
                 }
 
                 // Make second precision if not already
-                stat.mtime = new Date(Math.round(stat.mtime.getTime() / 1000) * 1000);
+                stat.mtime = new Date(Math.floor(stat.mtime.getTime() / 1000) * 1000);
                 cb(null, stat);
             });
         },
     };
 
-    const deferred = pDefer();
+    await lockfile.lock(`${tmpDir}/foo`, {
+        fs: customFs,
+        update: 1000,
+    });
 
-    // If the module does not detect second precision for mtime, the mtime
-    // comparison will cause the lock to appear compromised.
-    const handleCompromised = (err) => {
-        clearTimeout(successTimeoutId);
-        deferred.reject(err);
+    await pDelay(3000);
+});
+
+it('should allow ceil\'ed second precision mtime', async () => {
+    fs.writeFileSync(`${tmpDir}/foo`, '');
+
+    const customFs = {
+        ...fs,
+        stat(path, cb) {
+            fs.stat(path, (err, stat) => {
+                if (err) {
+                    return cb(err);
+                }
+
+                // Make second precision if not already
+                stat.mtime = new Date(Math.ceil(stat.mtime.getTime() / 1000) * 1000);
+                cb(null, stat);
+            });
+        },
     };
 
     await lockfile.lock(`${tmpDir}/foo`, {
         fs: customFs,
         update: 1000,
-        onCompromised: handleCompromised,
     });
 
-    // First update is fine because we `stat` after we `mkdir`, it'll fail on
-    // the second update when we use `utimes` and do not `stat` for the `mtime`
-    const successTimeoutId = setTimeout(deferred.resolve, 3000);
-
-    await deferred.promise;
+    await pDelay(3000);
 });

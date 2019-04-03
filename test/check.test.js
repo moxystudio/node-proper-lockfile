@@ -108,7 +108,7 @@ it('should not resolve symlinks if realpath is false', async () => {
 it('should fail if stating the lockfile errors out when verifying staleness', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
-    const mtime = (Date.now() - 60000) / 1000;
+    const mtime = new Date(Date.now() - 60000);
     const customFs = {
         ...fs,
         stat: (path, callback) => callback(new Error('foo')),
