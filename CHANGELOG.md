@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="4.1.1"></a>
+## [4.1.1](https://github.com/moxystudio/node-proper-lockfile/compare/v4.1.0...v4.1.1) (2019-04-03)
+
+
+### Bug Fixes
+
+* fix mtime precision on some filesystems ([#88](https://github.com/moxystudio/node-proper-lockfile/issues/88)) ([f266158](https://github.com/moxystudio/node-proper-lockfile/commit/f266158)), closes [#82](https://github.com/moxystudio/node-proper-lockfile/issues/82) [#87](https://github.com/moxystudio/node-proper-lockfile/issues/87)
+
+
+
 <a name="4.1.0"></a>
 # [4.1.0](https://github.com/moxystudio/node-proper-lockfile/compare/v4.0.0...v4.1.0) (2019-03-18)
 
