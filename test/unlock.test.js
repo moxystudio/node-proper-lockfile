@@ -102,12 +102,11 @@ it('should ignore ENOENT errors when removing the lockfile', async () => {
 it('should stop updating the lockfile mtime', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
-    const customFs = {
-        ...fs,
-        utimes: jest.fn((path, atime, mtime, callback) => callback()),
-    };
+    const customFs = { ...fs };
 
     await lockfile.lock(`${tmpDir}/foo`, { update: 2000, fs: customFs });
+
+    customFs.utimes = jest.fn((path, atime, mtime, callback) => callback());
 
     await lockfile.unlock(`${tmpDir}/foo`);
 
@@ -120,12 +119,11 @@ it('should stop updating the lockfile mtime', async () => {
 it('should stop updating the lockfile mtime (slow fs)', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
-    const customFs = {
-        ...fs,
-        utimes: jest.fn((...args) => setTimeout(() => fs.utimes(...args), 2000)),
-    };
+    const customFs = { ...fs };
 
     await lockfile.lock(`${tmpDir}/foo`, { fs: customFs, update: 2000 });
+
+    customFs.utimes = jest.fn((...args) => setTimeout(() => fs.utimes(...args), 2000));
 
     await pDelay(3000);
 
@@ -139,12 +137,11 @@ it('should stop updating the lockfile mtime (slow fs)', async () => {
 it('should stop updating the lockfile mtime (slow fs + new lock)', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
-    const customFs = {
-        ...fs,
-        utimes: jest.fn((...args) => setTimeout(() => fs.utimes(...args), 2000)),
-    };
+    const customFs = { ...fs };
 
     await lockfile.lock(`${tmpDir}/foo`, { fs: customFs, update: 2000 });
+
+    customFs.utimes = jest.fn((...args) => setTimeout(() => fs.utimes(...args), 2000));
 
     await pDelay(3000);
 
