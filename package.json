@@ -66,7 +66,7 @@
     "jest": "^24.5.0",
     "lint-staged": "^8.0.4",
     "mkdirp": "^0.5.1",
-    "p-defer": "^1.0.0",
+    "p-defer": "^2.1.0",
     "rimraf": "^2.6.2",
     "stable": "^0.1.8",
     "standard-version": "^5.0.0",
