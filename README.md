@@ -34,7 +34,7 @@ When a lock is successfully acquired, the lockfile's `mtime` (modified time) is 
 
 ### Comparison
 
-This library is similar to [lockfile](https://github.com/isaacs/lockfile) but the later has some drawbacks:
+This library is similar to [lockfile](https://github.com/isaacs/lockfile) but the latter has some drawbacks:
 
 - It relies on `open` with `O_EXCL` flag which has problems in network file systems. `proper-lockfile` uses `mkdir` which doesn't have this issue.
 
@@ -42,7 +42,7 @@ This library is similar to [lockfile](https://github.com/isaacs/lockfile) but th
 
 - The lockfile staleness check is done via `ctime` (creation time) which is unsuitable for long running processes. `proper-lockfile` constantly updates lockfiles `mtime` to do proper staleness check.
 
-- It does not check if the lockfile was compromised which can led to undesirable situations. `proper-lockfile` checks the lockfile when updating the `mtime`.
+- It does not check if the lockfile was compromised which can lead to undesirable situations. `proper-lockfile` checks the lockfile when updating the `mtime`.
 
 - It has a default value of `0` for the stale option which isn't good because any crash or process kill that the package can't handle gracefully will leave the lock active forever.
 
@@ -57,7 +57,7 @@ This library is similar to [lockfile](https://github.com/isaacs/lockfile) but th
 `proper-lockfile` detects cases in which:
 
 - Updates to the `lockfile` fail
-- Updates take longer than expected, possibly causing the lock to became stale for a certain amount of time
+- Updates take longer than expected, possibly causing the lock to become stale for a certain amount of time
 
 
 As you see, the first two are a consequence of bad usage. Technically, it was possible to detect the first two but it would introduce complexity and eventual race conditions.
@@ -107,7 +107,7 @@ lockfile.lock('some/file')
 
 Releases a previously acquired lock on `file` or rejects the promise on error.
 
-Whenever possible you should use the `release` function instead (as exemplified above). Still there are cases in which its hard to keep a reference to it around code. In those cases `unlock()` might be handy.
+Whenever possible you should use the `release` function instead (as exemplified above). Still there are cases in which it's hard to keep a reference to it around code. In those cases `unlock()` might be handy.
 
 Available options:
 
@@ -167,7 +167,7 @@ Returns a boolean or throws on error.
 
 ## Graceful exit
 
-`proper-lockfile` automatically remove locks if the process exists, except if the process is killed with SIGKILL or it crashes due to a VM fatal error (e.g.: out of memory).
+`proper-lockfile` automatically removes locks if the process exits, except if the process is killed with SIGKILL or it crashes due to a VM fatal error (e.g.: out of memory).
 
 
 ## Tests
