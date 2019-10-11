@@ -25,12 +25,8 @@
     "lint": "eslint .",
     "test": "jest --env node --coverage --runInBand",
     "prerelease": "npm t && npm run lint",
-    "release": "standard-version"
-  },
-  "standard-version": {
-    "scripts": {
-      "posttag": "git push --follow-tags origin master"
-    }
+    "release": "standard-version",
+    "postrelease": "git push --follow-tags origin master && npm publish"
   },
   "husky": {
     "hooks": {
