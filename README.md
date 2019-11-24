@@ -3,10 +3,10 @@
 [![NPM version][npm-image]][npm-url] [![Downloads][downloads-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Coverage Status][codecov-image]][codecov-url] [![Dependency status][david-dm-image]][david-dm-url] [![Dev Dependency status][david-dm-dev-image]][david-dm-dev-url]
 
 [npm-url]:https://npmjs.org/package/proper-lockfile
-[downloads-image]:http://img.shields.io/npm/dm/proper-lockfile.svg
-[npm-image]:http://img.shields.io/npm/v/proper-lockfile.svg
+[downloads-image]:https://img.shields.io/npm/dm/proper-lockfile.svg
+[npm-image]:https://img.shields.io/npm/v/proper-lockfile.svg
 [travis-url]:https://travis-ci.org/moxystudio/node-proper-lockfile
-[travis-image]:http://img.shields.io/travis/moxystudio/node-proper-lockfile/master.svg
+[travis-image]:https://img.shields.io/travis/moxystudio/node-proper-lockfile/master.svg
 [codecov-url]:https://codecov.io/gh/moxystudio/node-proper-lockfile
 [codecov-image]:https://img.shields.io/codecov/c/github/moxystudio/node-proper-lockfile/master.svg
 [david-dm-url]:https://david-dm.org/moxystudio/node-proper-lockfile
@@ -180,4 +180,4 @@ The test suite is very extensive. There's even a stress test to guarantee exclus
 
 ## License
 
-Released under the [MIT License](http://www.opensource.org/licenses/mit-license.php).
+Released under the [MIT License](https://www.opensource.org/licenses/mit-license.php).
