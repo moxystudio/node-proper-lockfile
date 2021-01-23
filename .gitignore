@@ -3,3 +3,4 @@ npm-debug.*
 coverage/
 test/tmp/
 test/*.log
+dist

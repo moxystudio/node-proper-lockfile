@@ -1,0 +1,38 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        // project options
+        "outDir": "dist",
+        "allowJs": true,
+        "checkJs": true,
+        "target": "ES2019",
+        "lib": ["ES2019", "ES2020.Promise", "ES2020.String", "ES2020.BigInt", "DOM", "DOM.Iterable"],
+        "noEmit": false,
+        "noEmitOnError": true,
+        "emitDeclarationOnly": true,
+        "declaration": true,
+        "declarationMap": true,
+        "incremental": true,
+        "composite": true,
+        "isolatedModules": true,
+        "removeComments": false,
+        // module resolution
+        "esModuleInterop": true,
+        "moduleResolution": "node",
+        // linter checks
+        "noImplicitReturns": false,
+        "noFallthroughCasesInSwitch": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": false,
+        // advanced
+        "importsNotUsedAsValues": "error",
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "stripInternal": true,
+        "resolveJsonModule": true
+    },
+    "include": [
+        "index.js",
+        "lib"
+    ]
+}
