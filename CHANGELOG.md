@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="4.1.2"></a>
+## [4.1.2](https://github.com/moxystudio/node-proper-lockfile/compare/v4.1.1...v4.1.2) (2021-01-25)
+
+
+### Bug Fixes
+
+* fix node 14 updating graceful-fs ([#102](https://github.com/moxystudio/node-proper-lockfile/issues/102)) ([b0d988e](https://github.com/moxystudio/node-proper-lockfile/commit/b0d988e))
+
+
+
 <a name="4.1.1"></a>
 ## [4.1.1](https://github.com/moxystudio/node-proper-lockfile/compare/v4.1.0...v4.1.1) (2019-04-03)
 
