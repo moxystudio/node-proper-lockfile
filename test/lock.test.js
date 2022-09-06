@@ -183,6 +183,19 @@ it('should remove and acquire over stale locks', async () => {
     expect(fs.statSync(`${tmpDir}/foo.lock`).mtime.getTime()).toBeGreaterThan(Date.now() - 3000);
 });
 
+it('should remove and acquire locks from the future', async () => {
+    const mtime = new Date(Date.now() + 60000);
+
+    fs.writeFileSync(`${tmpDir}/foo`, '');
+    fs.mkdirSync(`${tmpDir}/foo.lock`);
+    fs.utimesSync(`${tmpDir}/foo.lock`, mtime, mtime);
+
+    await lockfile.lock(`${tmpDir}/foo`);
+
+    expect(fs.statSync(`${tmpDir}/foo.lock`).mtime.getTime()).toBeGreaterThan(Date.now() - 3000);
+    expect(fs.statSync(`${tmpDir}/foo.lock`).mtime.getTime()).toBeLessThan(Date.now() + 3000);
+});
+
 it('should retry if the lockfile was removed when verifying staleness', async () => {
     const mtime = new Date(Date.now() - 60000);
     let count = 0;
