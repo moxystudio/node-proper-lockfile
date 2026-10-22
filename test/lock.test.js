@@ -563,6 +563,73 @@ it('should call the compromised function when we are over the threshold and mtim
     await deferred.promise;
 }, 16000);
 
+it('should not call the compromised function if the lock is released while updating the lockfile mtime (stat)', async () => {
+    fs.writeFileSync(`${tmpDir}/foo`, '');
+
+    const customFs = { ...fs };
+    const handleCompromised = jest.fn();
+    const statPending = pDefer();
+    const statDone = pDefer();
+
+    const release = await lockfile.lock(`${tmpDir}/foo`, {
+        fs: customFs,
+        update: 1000,
+        onCompromised: handleCompromised,
+    });
+
+    // Hold the next heartbeat stat until the lock has been released
+    customFs.stat = (path, callback) => statPending.resolve(() => fs.stat(path, (err, stat) => {
+        callback(err, stat);
+        statDone.resolve();
+    }));
+    customFs.utimes = jest.fn((...args) => fs.utimes(...args));
+
+    const finishStat = await statPending.promise;
+
+    await release();
+
+    // The lockfile is gone, so the stat fails with ENOENT
+    finishStat();
+    await statDone.promise;
+
+    expect(handleCompromised).not.toHaveBeenCalled();
+    expect(customFs.utimes).not.toHaveBeenCalled();
+});
+
+it('should not touch a new owner\'s lockfile if the lock is released while updating the lockfile mtime (stat)', async () => {
+    fs.writeFileSync(`${tmpDir}/foo`, '');
+
+    const customFs = { ...fs };
+    const handleCompromised = jest.fn();
+    const statPending = pDefer();
+    const statDone = pDefer();
+
+    const release = await lockfile.lock(`${tmpDir}/foo`, {
+        fs: customFs,
+        update: 1000,
+        onCompromised: handleCompromised,
+    });
+
+    // Hold the next heartbeat stat until the lock has been released and acquired again
+    customFs.stat = (path, callback) => statPending.resolve(() => fs.stat(path, (err, stat) => {
+        callback(err, stat);
+        statDone.resolve();
+    }));
+    customFs.utimes = jest.fn((...args) => fs.utimes(...args));
+
+    const finishStat = await statPending.promise;
+
+    await release();
+    await lockfile.lock(`${tmpDir}/foo`);
+
+    // The stat now sees the new owner's lockfile
+    finishStat();
+    await statDone.promise;
+
+    expect(handleCompromised).not.toHaveBeenCalled();
+    expect(customFs.utimes).not.toHaveBeenCalled();
+});
+
 it('should allow millisecond precision mtime', async () => {
     fs.writeFileSync(`${tmpDir}/foo`, '');
 
